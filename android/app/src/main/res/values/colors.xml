@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="button_start_color">#0075CB</color> <!-- Start color of the gradient -->
+    <color name="button_end_color">#47B2FF</color> <!-- End color of the gradient -->
+    <color name="button_pressed_color">#a1d7f0</color> <!-- Color when button is pressed -->
+    <color name="button_focused_color">#a1d7f0</color> <!-- Color when button is focused -->
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Button Pressed State -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/button_pressed_color" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- Button Focused State -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/button_focused_color" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- Button Normal State -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/button_start_color"
+                android:endColor="@color/button_end_color"
+                android:angle="90" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+</selector>

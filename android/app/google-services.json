@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "135821245466",
+    "project_id": "trackk-96924",
+    "storage_bucket": "trackk-96924.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135821245466:android:94ff2d9f4e5fe6e5c525a3",
+        "android_client_info": {
+          "package_name": "com.uvtechsoft.dimensions"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUOe_PPXIphP1werDTOKUz91zau9c5Hdc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,41 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Poppins-Bold.ttf",
+      "sha1": "875cf0cecd647bcf22e79d633d868c1b1ec98dfa"
+    },
+    {
+      "path": "assets/fonts/Poppins-Medium.ttf",
+      "sha1": "283f21b44efbdbf276ba802be2d949a36bbc4233"
+    },
+    {
+      "path": "assets/fonts/Poppins-Regular.ttf",
+      "sha1": "fdd3002e7d814ee47c1c1b8487c72c6bbb3a2d00"
+    },
+    {
+      "path": "assets/fonts/Poppins-SemiBold.ttf",
+      "sha1": "8a4ace9392d06bcb7f8ea2f5169b07e4c383a90d"
+    },
+    {
+      "path": "assets/images/emptyImg.jpg",
+      "sha1": "bae8dccdf66162ff575b84e5ba2c653088b6cf66"
+    },
+    {
+      "path": "assets/images/femaleUser.png",
+      "sha1": "fff763d05a3c31de152db42cee86e596492b4655"
+    },
+    {
+      "path": "assets/images/maleUser.png",
+      "sha1": "3e6e09bd567bfa040d0d15c27a279c8df7816a50"
+    },
+    {
+      "path": "assets/images/noProfile.png",
+      "sha1": "9485b24e7b93f6f63c57e7e568f98c79671af7f5"
+    },
+    {
+      "path": "assets/index.ts",
+      "sha1": "0be0d826904e5547b24a53fc056df05b0bd40e38"
+    }
+  ]
+}
