@@ -27,6 +27,7 @@ export const openDatabase = () => {
   return db;
 };
 
+
 const createTable = () => {
   db.transaction(tx => {
     tx.executeSql(
@@ -194,7 +195,7 @@ export const getTasksByDate = (date, userId, callback) => {
       `SELECT * FROM tasks WHERE ASSIGNED_DATE LIKE ? AND USER_ID = ?`,
       [dbDate, userId],
       (tx, results) => {
-        const {rows} = results;
+        const { rows } = results;
         let tasks = [];
         if (rows.length > 0) {
           for (let i = 0; i < rows.length; i++) {
@@ -288,3 +289,16 @@ export const getSubmitApiCalledFlag = (userId, date) => {
   });
 };
 
+export const deleteTableData = () => {
+  db.transaction(tx => {
+    tx.executeSql(
+      `DELETE FROM tasks;`,
+      [],
+      () => console.log("All tasks deleted successfully"),
+      (tx, err) => {
+        console.error("Error deleting tasks data:", err);
+        return true;
+      }
+    );
+  });
+};

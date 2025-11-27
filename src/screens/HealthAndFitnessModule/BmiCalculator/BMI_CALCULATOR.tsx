@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,16 @@ import {
 } from 'react-native';
 
 import AnimatedSlider from './AnimatedSlider';
-import {apiPost, apiPut, useSelector} from '../../../Modules';
-import {Header, TextButton, Toast} from '../../../Components';
-import {StackProps} from '../../../routes';
+import { apiPost, apiPut, useSelector } from '../../../Modules';
+import { Header, TextButton, Toast } from '../../../Components';
+import { StackProps } from '../../../routes';
 import moment from 'moment';
-import {RESULTS} from 'react-native-permissions';
-import {BMI_DATA_INTERFACE} from '../../../Modules/interface';
+import { RESULTS } from 'react-native-permissions';
+import { BMI_DATA_INTERFACE } from '../../../Modules/interface';
 import SliderBMI from './SliderBMI';
 import LinearGradient from 'react-native-linear-gradient';
 import TypeSlider from './TypeSlider';
-import {Dropdown} from 'react-native-element-dropdown';
+import { Dropdown } from 'react-native-element-dropdown';
 const Colors = {
   primary: '#007AFF',
   secondary: '#F4F4F4',
@@ -78,7 +78,7 @@ type dimension = {
   steps: number;
   ratio: number;
 };
-const WEIGHT: {KG: dimension; LB: dimension} = {
+const WEIGHT: { KG: dimension; LB: dimension } = {
   KG: {
     label: 'KG',
     title: 'Kilograms',
@@ -96,7 +96,7 @@ const WEIGHT: {KG: dimension; LB: dimension} = {
     ratio: 2.205,
   },
 };
-const HEIGHT: {CM: dimension; FT: dimension} = {
+const HEIGHT: { CM: dimension; FT: dimension } = {
   CM: {
     label: 'CM',
     title: 'CM',
@@ -115,31 +115,31 @@ const HEIGHT: {CM: dimension; FT: dimension} = {
   },
 };
 const FOOT_DATA = [
-  {value: '0'},
-  {value: '1'},
-  {value: '2'},
-  {value: '3'},
-  {value: '4'},
-  {value: '5'},
-  {value: '6'},
-  {value: '7'},
-  {value: '8'},
-  {value: '9'},
-  {value: '10'},
+  { value: '0' },
+  { value: '1' },
+  { value: '2' },
+  { value: '3' },
+  { value: '4' },
+  { value: '5' },
+  { value: '6' },
+  { value: '7' },
+  { value: '8' },
+  { value: '9' },
+  { value: '10' },
 ];
 const INCH_DATA = [
-  {value: '0'},
-  {value: '1'},
-  {value: '2'},
-  {value: '3'},
-  {value: '4'},
-  {value: '5'},
-  {value: '6'},
-  {value: '7'},
-  {value: '8'},
-  {value: '9'},
-  {value: '10'},
-  {value: '11'},
+  { value: '0' },
+  { value: '1' },
+  { value: '2' },
+  { value: '3' },
+  { value: '4' },
+  { value: '5' },
+  { value: '6' },
+  { value: '7' },
+  { value: '8' },
+  { value: '9' },
+  { value: '10' },
+  { value: '11' },
 ];
 const convertToCM: (foot: number, inch: number) => number = (foot, inch) => {
   //calculate the height in CM
@@ -166,9 +166,9 @@ const getLabelByBMI = (bmi: number) => {
   }
 };
 type Props = StackProps<'BMI_CALCULATOR'>;
-const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {member} = useSelector(state => state.member);
+const BMI_CALCULATOR = ({ navigation }: Props): JSX.Element => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { member } = useSelector(state => state.member);
   const basicScrollView = useRef<ScrollView>(null);
   const [loader, setLoader] = useState({
     loading: false,
@@ -207,7 +207,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
     // getData();
   }, []);
   const getData = async () => {
-    setLoader({loading: true});
+    setLoader({ loading: true });
     try {
       let res = await apiPost('api/userBmi/get', {
         filter: ` AND USER_ID = ${member?.ID} `,
@@ -220,31 +220,32 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
             bmi: res.data[0].BMI,
           });
           setBmiData(res.data[0]);
-          setLoader({loading: false});
+          setLoader({ loading: false });
         } else {
-          setLoader({loading: false});
+          setLoader({ loading: false });
         }
       } else {
-        setLoader({loading: false});
+        setLoader({ loading: false });
       }
     } catch (error) {
-      setLoader({loading: false});
+      setLoader({ loading: false });
       navigation.goBack();
       Toast('Unable to open BMI Calculator, \nPlease try again later');
     }
   };
   const createData = async () => {
-    setLoader({loading: true});
+    setLoader({ loading: true });
     let heightValue = 0;
     let heightLabel = '';
-    if (height.selectedHeight == 'CM') {
+    if (height.selectedHeight === 'CM') {
       heightValue = height.value;
-      heightLabel = '' + height.value;
-    } else if (height.selectedHeight == 'FT') {
+      heightLabel = String(height.value);
+    } else if (height.selectedHeight === 'FT') {
       heightValue = convertToCM(height.foot, height.inch);
-      heightLabel = `${height.foot}' ${height.inch}"`;
+      heightLabel = String(heightValue);
     } else {
       heightValue = 0;
+      heightLabel = "0";
     }
     try {
       let BMI = CalculateBMI(weight.value, heightValue);
@@ -257,8 +258,8 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
           height.selectedHeight == 'CM'
             ? 'CM'
             : height.selectedHeight == 'FT'
-            ? 'FT'
-            : '',
+              ? 'FT'
+              : '',
         BMI: BMI,
         CLIENT_ID: 1,
         CREATED_DATETIME: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -267,14 +268,16 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
         getData();
       } else {
         Toast('Unable to open BMI Calculator, \nPlease try again later');
-        setLoader({loading: false});
+        setLoader({ loading: false });
       }
     } catch (error) {
-      setLoader({loading: false});
+      setLoader({ loading: false });
     }
   };
+
+
   const updateData = async () => {
-    setLoader({loading: true});
+    setLoader({ loading: true });
     try {
       let BMI = CalculateBMI(weight.value, height.value);
       const body = {
@@ -294,21 +297,21 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
         getData();
       } else {
         Toast('Unable to open BMI Calculator, \nPlease try again later');
-        setLoader({loading: false});
+        setLoader({ loading: false });
       }
     } catch (error) {
-      setLoader({loading: true});
+      setLoader({ loading: true });
     }
   };
   return (
-    <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <Header label="BMI CALCULATOR" onBack={() => navigation.goBack()} />
       {loader.loading ? (
         <Loader />
       ) : data.bmi ? (
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           <View
-            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <SliderBMI
               colors={[
                 '#ADD8E6',
@@ -366,11 +369,11 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
               label="Update"
               loading={updateBmi.loading}
               onPress={async () => {
-                setUpdateBmi({loading: true, update: true});
-                setData({bmi: null, height: null, weight: null});
-                setUpdateBmi({loading: false, update: true});
+                setUpdateBmi({ loading: true, update: true });
+                setData({ bmi: null, height: null, weight: null });
+                setUpdateBmi({ loading: false, update: true });
               }}
-              style={{flex: 1}}
+              style={{ flex: 1 }}
             />
           </View>
         </View>
@@ -381,7 +384,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
           showsHorizontalScrollIndicator={false}
           scrollEnabled={false}
           bounces={false}>
-          <View style={{width: Sizes.Width, overflow: 'hidden'}}>
+          <View style={{ width: Sizes.Width, overflow: 'hidden' }}>
             <Text
               style={{
                 ...Fonts.Bold1,
@@ -417,24 +420,24 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
             <AnimatedSlider
               value={weight.value}
               label={WEIGHT[weight.selectedWeight].label}
-              onChange={value => setWeight({...weight, value})}
+              onChange={value => setWeight({ ...weight, value })}
               start={WEIGHT[weight.selectedWeight].minimumValue}
               end={WEIGHT[weight.selectedWeight].maximumValue}
               step={WEIGHT[weight.selectedWeight].steps}
             />
 
-            <View style={{margin: Sizes.ScreenPadding}}>
+            <View style={{ margin: Sizes.ScreenPadding }}>
               <TextButton
                 label="Next"
                 loading={false}
                 onPress={() =>
-                  basicScrollView.current?.scrollTo({x: Sizes.Width})
+                  basicScrollView.current?.scrollTo({ x: Sizes.Width })
                 }
               />
             </View>
           </View>
-          <View style={{width: Sizes.Width, overflow: 'hidden'}}>
-            <View style={{flex: 1}}>
+          <View style={{ width: Sizes.Width, overflow: 'hidden' }}>
+            <View style={{ flex: 1 }}>
               <Text
                 style={{
                   ...Fonts.Bold1,
@@ -461,14 +464,14 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                 data={HEIGHT}
                 value={height.selectedHeight}
                 onChange={value =>
-                  setHeight({...height, selectedHeight: value})
+                  setHeight({ ...height, selectedHeight: value })
                 }
               />
               {height.selectedHeight == 'CM' ? (
                 <AnimatedSlider
                   value={height.value}
                   label={HEIGHT[height.selectedHeight].label}
-                  onChange={value => setHeight({...height, value})}
+                  onChange={value => setHeight({ ...height, value })}
                   start={HEIGHT[height.selectedHeight].minimumValue}
                   end={HEIGHT[height.selectedHeight].maximumValue}
                   step={HEIGHT[height.selectedHeight].steps}
@@ -487,7 +490,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                       alignItems: 'center',
                       paddingHorizontal: 40,
                     }}>
-                    <View style={{flex: 1}}>
+                    <View style={{ flex: 1 }}>
                       <Dropdown
                         // @ts-ignore
                         labelField={'value'}
@@ -506,11 +509,12 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                         }}
                         //@ts-ignore
                         data={FOOT_DATA}
-                        onChange={(value: string) => {
-                          if (!isNaN(parseInt(value))) {
+                        onChange={(item: any) => {
+                          const footValue = parseInt(item.value);
+                          if (!isNaN(footValue)) {
                             setHeight({
                               ...height,
-                              foot: parseInt(value),
+                              foot: footValue,
                             });
                           }
                         }}
@@ -527,7 +531,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                         fontSize: 50,
                       }}>
                       <Text
-                        style={{fontSize: 40, textDecorationLine: undefined}}>
+                        style={{ fontSize: 40, textDecorationLine: undefined }}>
                         {` Foot`}
                       </Text>
                     </Text>
@@ -539,7 +543,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                       paddingHorizontal: 40,
                       marginTop: 20,
                     }}>
-                    <View style={{flex: 1}}>
+                    <View style={{ flex: 1 }}>
                       <Dropdown
                         // @ts-ignore
                         labelField={'value'}
@@ -557,11 +561,12 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                         }}
                         //@ts-ignore
                         data={INCH_DATA}
-                        onChange={(value: string) => {
-                          if (!isNaN(parseInt(value))) {
+                        onChange={(item: any) => {
+                          const inchValue = parseInt(item.value);
+                          if (!isNaN(inchValue)) {
                             setHeight({
                               ...height,
-                              inch: parseInt(value),
+                              inch: inchValue,
                             });
                           }
                         }}
@@ -578,7 +583,7 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                         fontSize: 50,
                       }}>
                       <Text
-                        style={{fontSize: 40, textDecorationLine: undefined}}>
+                        style={{ fontSize: 40, textDecorationLine: undefined }}>
                         {` Inch`}
                       </Text>
                     </Text>
@@ -590,15 +595,15 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
                   margin: Sizes.ScreenPadding,
                   flexDirection: 'row',
                 }}>
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <TextButton
                     label="Back"
                     loading={false}
-                    onPress={() => basicScrollView.current?.scrollTo({x: 0})}
+                    onPress={() => basicScrollView.current?.scrollTo({ x: 0 })}
                   />
                 </View>
-                <View style={{width: Sizes.ScreenPadding}} />
-                <View style={{flex: 1}}>
+                <View style={{ width: Sizes.ScreenPadding }} />
+                <View style={{ flex: 1 }}>
                   <TextButton
                     label="Next"
                     loading={false}
@@ -615,8 +620,8 @@ const BMI_CALCULATOR = ({navigation}: Props): JSX.Element => {
 };
 export default BMI_CALCULATOR;
 
-type LoaderProps = {onClose?: () => void; label?: string};
-const Loader: React.FC<LoaderProps> = ({onClose, label = 'Loading'}) => {
+type LoaderProps = { onClose?: () => void; label?: string };
+const Loader: React.FC<LoaderProps> = ({ onClose, label = 'Loading' }) => {
   return (
     <Modal visible onRequestClose={onClose ? onClose : () => null} transparent>
       <View style={styles2.backdrop}>

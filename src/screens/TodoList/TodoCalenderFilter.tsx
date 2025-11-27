@@ -7,22 +7,22 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {StackProps} from '../../routes';
-import {apiPost, apiPut, useSelector} from '../../Modules';
-import {Header, Icon, Modal, TextButton} from '../../Components';
-import {Calendar} from 'react-native-calendars';
+import React, { useEffect, useState } from 'react';
+import { StackProps } from '../../routes';
+import { apiPost, apiPut, useSelector } from '../../Modules';
+import { Header, Icon, Modal, TextButton } from '../../Components';
+import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
-import {useFocusEffect} from '@react-navigation/native';
-import {WEEKLY_PLANNER_INTERFACE} from '../../Modules/interface';
-import {Checkbox} from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
+import { WEEKLY_PLANNER_INTERFACE } from '../../Modules/interface';
+import { Checkbox } from 'react-native-paper';
 import AddTodoTask from './AddTodoTask';
-import {noData} from '../../../assets';
+import { noData } from '../../../assets';
 
 type Props = StackProps<'TodoCalenderFilter'>;
-const TodoCalenderFilter = ({navigation}: Props) => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {member} = useSelector(state => state.member);
+const TodoCalenderFilter = ({ navigation }: Props) => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { member } = useSelector(state => state.member);
   const [selected, setSelected] = useState<any>(
     moment(new Date()).format('YYYY-MM-DD'),
   );
@@ -74,7 +74,7 @@ const TodoCalenderFilter = ({navigation}: Props) => {
         filter: ` AND TYPE = 'TD' AND MEMBER_ID = ${member?.ID} AND STATUS=1`,
       });
       if (res && res.code == 200) {
-        setAllTaskData({...allTaskData, data: res.data, loading: false});
+        setAllTaskData({ ...allTaskData, data: res.data, loading: false });
       }
     } catch (error) {
       console.log('err,,,', error);
@@ -126,26 +126,31 @@ const TodoCalenderFilter = ({navigation}: Props) => {
         item.IS_SUB_TASK == 0
           ? item.DESCRIPTION
           : item.DESCRIPTION.length > 0
-          ? JSON.parse(item.DESCRIPTION)
-          : '';
+            ? JSON.parse(item.DESCRIPTION)
+            : '';
       const changeData =
         item.IS_SUB_TASK == 0
           ? item.DESCRIPTION
           : item?.DESCRIPTION.length > 0
-          ? convertData.map((it: any) => {
-              return {...it, status: item.IS_COMPLETED == 0 ? 1 : 0};
+            ? convertData.map((it: any) => {
+              return { ...it, status: item.IS_COMPLETED == 0 ? 1 : 0 };
             })
-          : '';
+            : '';
 
       let body = {
         MEMBER_ID: member?.ID,
         ID: item.ID,
-        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME: new Date()).format('YYYY-MM-DD HH:mm:ss'),
-//        CREATED_DATETIME: item.CREATED_DATETIME,
+        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME : new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        //        CREATED_DATETIME: item.CREATED_DATETIME,
         TITLE: item.TITLE,
         DESCRIPTION: changeData ? JSON.stringify(changeData) : changeData,
         IS_REMIND: item.IS_REMIND,
-        REMIND_DATETIME: moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss'),
+        REMIND_DATETIME:
+          item.IS_REMIND == 1 &&
+            item.REMIND_DATETIME &&
+            moment(item.REMIND_DATETIME).isValid()
+            ? moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss')
+            : null,
         REMIND_TYPE: item.REMIND_TYPE,
         IS_COMPLETED: item.IS_COMPLETED == 0 ? 1 : 0,
         STATUS: 1,
@@ -162,16 +167,16 @@ const TodoCalenderFilter = ({navigation}: Props) => {
     }
   };
   const DeleteTask = async () => {
-    setModal({...modal, deleteLoading: true});
+    setModal({ ...modal, deleteLoading: true });
     try {
       let body = deleteItem.map((item: any) => {
         return item.ID;
       });
-      const res = await apiPost('api/memberTodo/remove', {IDS: body});
+      const res = await apiPost('api/memberTodo/remove', { IDS: body });
       if (res && res.code == 200) {
         setDeleteItem([]);
-        setModal({...modal, deleteLoading: false});
-        setModal({...modal, isDeleteItem: false, openDeleteModal: false});
+        setModal({ ...modal, deleteLoading: false });
+        setModal({ ...modal, isDeleteItem: false, openDeleteModal: false });
         getTasks();
       }
     } catch (error) {
@@ -233,12 +238,12 @@ const TodoCalenderFilter = ({navigation}: Props) => {
               toggleDeleteItem(item);
             } else {
               item.IS_SUB_TASK == 1
-                ? navigation.navigate('SubTaskList', {item})
+                ? navigation.navigate('SubTaskList', { item })
                 : null;
             }
           }}
           onLongPress={() => {
-            setModal({...modal, isDeleteItem: true});
+            setModal({ ...modal, isDeleteItem: true });
             setDeleteItem((prevData: any) => [...prevData, item]);
           }}>
           <Text
@@ -258,7 +263,7 @@ const TodoCalenderFilter = ({navigation}: Props) => {
             }}>
             <View
               style={{
-                transform: [{scale: 0.9}],
+                transform: [{ scale: 0.9 }],
               }}>
               <Checkbox
                 uncheckedColor={Colors.PrimaryText}
@@ -269,7 +274,7 @@ const TodoCalenderFilter = ({navigation}: Props) => {
                 status={item.IS_COMPLETED === 1 ? 'checked' : 'unchecked'}
               />
             </View>
-            <Text style={{color: Colors.PrimaryText1, ...Fonts.Medium2}}>
+            <Text style={{ color: Colors.PrimaryText1, ...Fonts.Medium2 }}>
               {item.TITLE}
             </Text>
           </View>
@@ -303,9 +308,8 @@ const TodoCalenderFilter = ({navigation}: Props) => {
                 marginLeft: 36,
                 marginTop: -4,
               }}>
-              {`${count} of ${JSON.parse(item.DESCRIPTION).length} ${
-                count > 1 ? 'tasks' : 'task'
-              } completed`}
+              {`${count} of ${JSON.parse(item.DESCRIPTION).length} ${count > 1 ? 'tasks' : 'task'
+                } completed`}
             </Text>
           )}
         </TouchableOpacity>
@@ -313,7 +317,7 @@ const TodoCalenderFilter = ({navigation}: Props) => {
     );
   };
   return (
-    <View style={{flex: 1, backgroundColor: '#EAEDED'}}>
+    <View style={{ flex: 1, backgroundColor: '#EAEDED' }}>
       <Header
         label="Daily Organizer"
         onBack={() => {
@@ -334,14 +338,14 @@ const TodoCalenderFilter = ({navigation}: Props) => {
           },
         }}
       />
-      <View style={{flex: 1, marginVertical: Sizes.Radius}}>
+      <View style={{ flex: 1, marginVertical: Sizes.Radius }}>
         {taskData.loading ? (
           <ActivityIndicator color={Colors.Primary} />
         ) : taskData.data.length == 0 ? (
-          <View style={{alignItems: 'center'}}>
+          <View style={{ alignItems: 'center' }}>
             <Image
               source={noData}
-              style={{height: 160, width: 160, tintColor: Colors.Primary}}
+              style={{ height: 160, width: 160, tintColor: Colors.Primary }}
             />
           </View>
         ) : (
@@ -383,12 +387,12 @@ const TodoCalenderFilter = ({navigation}: Props) => {
               color={Colors.Primary}
               size={25}
               onPress={() => {
-                setModal({...modal, openDeleteModal: true});
+                setModal({ ...modal, openDeleteModal: true });
               }}
             />
             <Text
               onPress={() => {
-                setModal({...modal, openDeleteModal: true});
+                setModal({ ...modal, openDeleteModal: true });
               }}
               style={{
                 ...Fonts.Regular2,
@@ -422,12 +426,12 @@ const TodoCalenderFilter = ({navigation}: Props) => {
                 color={Colors.Primary}
                 size={25}
                 onPress={() => {
-                  setModal({...modal, createTask: true});
+                  setModal({ ...modal, createTask: true });
                 }}
               />
               <Text
                 onPress={() => {
-                  setModal({...modal, createTask: false});
+                  setModal({ ...modal, createTask: false });
                 }}
                 style={{
                   ...Fonts.Regular2,
@@ -444,10 +448,10 @@ const TodoCalenderFilter = ({navigation}: Props) => {
         <AddTodoTask
           visible={modal.createTask}
           onClose={() => {
-            setModal({...modal, createTask: false});
+            setModal({ ...modal, createTask: false });
           }}
           onSuccess={() => {
-            setModal({...modal, createTask: false, isDeleteItem: false});
+            setModal({ ...modal, createTask: false, isDeleteItem: false });
             setDeleteItem([]);
             getTasks();
           }}
@@ -458,10 +462,10 @@ const TodoCalenderFilter = ({navigation}: Props) => {
         <Modal
           isVisible={modal.openDeleteModal}
           onClose={() => {
-            setModal({...modal, openDeleteModal: false});
+            setModal({ ...modal, openDeleteModal: false });
           }}
-          containerStyle={{justifyContent: 'flex-end'}}
-          style={{borderRadius: Sizes.Padding}}>
+          containerStyle={{ justifyContent: 'flex-end' }}
+          style={{ borderRadius: Sizes.Padding }}>
           <View style={{}}>
             <Text
               style={{
@@ -469,21 +473,20 @@ const TodoCalenderFilter = ({navigation}: Props) => {
                 ...Fonts.Bold2,
                 textAlign: 'center',
               }}>
-              {`Delete ${deleteItem.length} ${
-                deleteItem.length > 1 ? 'Tasks' : 'Task'
-              }?`}
+              {`Delete ${deleteItem.length} ${deleteItem.length > 1 ? 'Tasks' : 'Task'
+                }?`}
             </Text>
-            <View style={{flexDirection: 'row', marginTop: Sizes.Padding}}>
+            <View style={{ flexDirection: 'row', marginTop: Sizes.Padding }}>
               <TextButton
                 isBorder
-                style={{flex: 1, borderColor: Colors.Secondary}}
+                style={{ flex: 1, borderColor: Colors.Secondary }}
                 label="Cancel"
                 loading={false}
-                onPress={() => setModal({...modal, openDeleteModal: false})}
+                onPress={() => setModal({ ...modal, openDeleteModal: false })}
               />
-              <View style={{width: Sizes.Radius}} />
+              <View style={{ width: Sizes.Radius }} />
               <TextButton
-                style={{flex: 1}}
+                style={{ flex: 1 }}
                 label="Delete"
                 loading={modal.deleteLoading}
                 onPress={() => {

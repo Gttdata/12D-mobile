@@ -56,9 +56,6 @@ class BatteryRestrictions(reactContext: ReactApplicationContext) : ReactContextB
             intent.data = Uri.parse("package:$packageName")
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             try {
-
-
-
                 reactApplicationContext.startActivity(intent)
             } catch (e: Exception) {
                 showToast("Unable to open battery optimization settings.")

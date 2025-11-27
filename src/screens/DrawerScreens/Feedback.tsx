@@ -1,11 +1,12 @@
-import {View, Text, TouchableOpacity} from 'react-native';
-import React, {useState} from 'react';
-import {useSelector} from '../../Modules';
-import {Header, Icon, TextButton, TextInput} from '../../Components';
-import {StackProps} from '../../routes';
+import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { apiPost, useSelector } from '../../Modules';
+import { Header, Icon, TextButton, TextInput, Toast } from '../../Components';
+import { StackProps } from '../../routes';
 type Props = StackProps<'Feedback'>;
-const Feedback = ({navigation}: Props) => {
-  const {Colors, Sizes, Fonts} = useSelector(state => state.app);
+const Feedback = ({ navigation }: Props) => {
+  const { Colors, Sizes, Fonts } = useSelector(state => state.app);
+  const { member } = useSelector((state) => state.member);
   const [feedback, setFeedback] = useState({
     message: '',
     loading: false,
@@ -15,10 +16,59 @@ const Feedback = ({navigation}: Props) => {
     data: 'Excelent',
   });
 
+  console.log("MEMEBER_ID", member?.ID);
+
+  const ratingMap: any = {
+    Excelent: 5,
+    Good: 4,
+    Medium: 3,
+    Poor: 2,
+    bad: 1,
+  };
+
+
+  const submitFeedback = async () => {
+    if (!feedback.message.trim()) {
+      Toast("Please write feedback");
+      return;
+    }
+
+    const ratingValue = ratingMap[selectedEmoji.data];
+    setFeedback({ ...feedback, loading: true });
+
+    try {
+      let res = await apiPost('api/feedback/create', {
+        USER_ID: member?.ID,
+        RATING: ratingValue,
+        MESSAGE: feedback.message,
+        STATUS: "",
+        REPLAY: "",
+        CLIENT_ID: 1,
+      });
+
+      console.log("FEEDBACK RESPONSE", res);
+
+      if (res?.code === 200) {
+        setFeedback({ message: "", loading: false });
+        Toast("Thank you for your feedback!");
+        navigation.goBack();
+      } else {
+        setFeedback({ ...feedback, loading: false });
+        Toast(res?.message ?? "Something went wrong!");
+      }
+
+    } catch (error) {
+      console.log("FEEDBACK ERROR", error);
+      setFeedback({ ...feedback, loading: false });
+      Toast("Something went wrong!");
+    }
+  };
+
+
   return (
-    <View style={{flex: 1, backgroundColor: Colors.Background}}>
+    <View style={{ flex: 1, backgroundColor: Colors.Background }}>
       <Header label="Feedback" onBack={() => navigation.goBack()}></Header>
-      <View style={{flex: 1, margin: Sizes.ScreenPadding}}>
+      <View style={{ flex: 1, margin: Sizes.ScreenPadding }}>
         <Text
           style={{
             color: Colors.PrimaryText1,
@@ -40,8 +90,8 @@ const Feedback = ({navigation}: Props) => {
             //  justifyContent: 'center',
           }}>
           <TouchableOpacity
-            onPress={() => setSelectedEmoji({selected: true, data: 'Excelent'})}
-            style={{flex: 1, alignItems: 'center'}}>
+            onPress={() => setSelectedEmoji({ selected: true, data: 'Excelent' })}
+            style={{ flex: 1, alignItems: 'center' }}>
             <Icon
               name="smiley"
               type="Fontisto"
@@ -49,7 +99,7 @@ const Feedback = ({navigation}: Props) => {
               color={
                 selectedEmoji.data == 'Excelent' && selectedEmoji.selected
                   ? Colors.Primary
-                  : Colors.Primary2+99
+                  : Colors.Primary2 + 99
               }></Icon>
             <Text
               style={{
@@ -65,11 +115,11 @@ const Feedback = ({navigation}: Props) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setSelectedEmoji({selected: true, data: 'Good'})}
-            style={{flex: 1, alignItems: 'center'}}>
+            onPress={() => setSelectedEmoji({ selected: true, data: 'Good' })}
+            style={{ flex: 1, alignItems: 'center' }}>
             <Icon
               color={
-                selectedEmoji.data == 'Good' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2+99
+                selectedEmoji.data == 'Good' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2 + 99
               }
               name="slightly-smile"
               type="Fontisto"
@@ -88,13 +138,13 @@ const Feedback = ({navigation}: Props) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setSelectedEmoji({selected: true, data: 'Medium'})}
-            style={{flex: 1, alignItems: 'center'}}>
+            onPress={() => setSelectedEmoji({ selected: true, data: 'Medium' })}
+            style={{ flex: 1, alignItems: 'center' }}>
             <Icon
               color={
                 selectedEmoji.data == 'Medium' && selectedEmoji.selected
                   ? Colors.Primary
-                  : Colors.Primary2+99
+                  : Colors.Primary2 + 99
               }
               name="neutral"
               type="Fontisto"
@@ -114,11 +164,11 @@ const Feedback = ({navigation}: Props) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setSelectedEmoji({selected: true, data: 'Poor'})}
-            style={{flex: 1, alignItems: 'center'}}>
+            onPress={() => setSelectedEmoji({ selected: true, data: 'Poor' })}
+            style={{ flex: 1, alignItems: 'center' }}>
             <Icon
               color={
-                selectedEmoji.data == 'Poor' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2+99
+                selectedEmoji.data == 'Poor' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2 + 99
               }
               name="expressionless"
               type="Fontisto"
@@ -138,11 +188,11 @@ const Feedback = ({navigation}: Props) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setSelectedEmoji({selected: true, data: 'bad'})}
-            style={{flex: 1, alignItems: 'center'}}>
-            <Icon 
+            onPress={() => setSelectedEmoji({ selected: true, data: 'bad' })}
+            style={{ flex: 1, alignItems: 'center' }}>
+            <Icon
               color={
-                selectedEmoji.data == 'bad' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2+99
+                selectedEmoji.data == 'bad' && selectedEmoji.selected ? Colors.Primary : Colors.Primary2 + 99
               }
               name="frowning"
               type="Fontisto"
@@ -163,19 +213,19 @@ const Feedback = ({navigation}: Props) => {
         </View>
 
         <TextInput
-          labelStyle={{marginTop: Sizes.Padding}}
+          labelStyle={{ marginTop: Sizes.Padding }}
           label="Feedback"
           style={{}}
-          onChangeText={(txt) => {setFeedback({...feedback,message:txt})}}
+          onChangeText={(txt) => { setFeedback({ ...feedback, message: txt }) }}
           value={feedback.message}
           multiline
           placeholder="Great App..."></TextInput>
       </View>
-      <View style={{margin: Sizes.ScreenPadding}}>
+      <View style={{ margin: Sizes.ScreenPadding }}>
         <TextButton
           label="Send Feedback"
           loading={feedback.loading}
-          onPress={() => {}}
+          onPress={submitFeedback}
         />
       </View>
     </View>

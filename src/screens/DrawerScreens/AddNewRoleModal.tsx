@@ -222,7 +222,11 @@ const AddNewRoleModal = ({ visible, onClose, title, onSuccess }: modalProps) => 
         setLoading(false);
         Toast('Registration Success');
         dispatch(Reducers.setShowSplash(true));
-      } else {
+      }
+      else if (res && res.code == 300) {
+        Toast('Mobile Number Exeded user limit...');
+      }
+      else {
         setLoading(false);
         Toast('Something Wrong Please Try Again..');
       }

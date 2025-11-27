@@ -1,5 +1,3 @@
-
-
 import {
   View,
   Text,
@@ -53,6 +51,13 @@ const Profile = ({ navigation }: any) => {
   const headerAnimation = useSharedValue(0);
   const imageanimation = useSharedValue(-200);
 
+  // Add refs for scrolling and keyboard handling
+  const scrollViewRef = useRef<ScrollView>(null);
+  const cityDropdownRef = useRef<any>(null);
+  const districtDropdownRef = useRef<any>(null);
+  const stateDropdownRef = useRef<any>(null);
+  const countryDropdownRef = useRef<any>(null);
+
   useEffect(() => {
     headerAnimation.value = withTiming(160, { duration: 1000 });
     imageanimation.value = withTiming(0, { duration: 1000 });
@@ -65,8 +70,6 @@ const Profile = ({ navigation }: any) => {
     getCityList();
   }, []);
 
-
-
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
@@ -78,6 +81,7 @@ const Profile = ({ navigation }: any) => {
       height: headerAnimation.value,
     };
   });
+
   const Imageanimationstyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: imageanimation.value }],
@@ -117,13 +121,16 @@ const Profile = ({ navigation }: any) => {
       NAME: member?.DISTRICT_NAME ? member?.DISTRICT_NAME : '',
       ID: member?.DISTRICT_ID ? member?.DISTRICT_ID : '',
     },
+    city: {
+      NAME: member?.CITY_NAME ? member?.CITY_NAME : '',
+      ID: member?.CITY_ID ? member?.CITY_ID : '',
+    },
     PROFILE_PHOTO: {
       URL: '',
       NAME: member?.PROFILE_PHOTO,
       FILE_TYPE: '',
     },
   });
-
 
   const [data, setData] = useState({
     state: [],
@@ -138,6 +145,7 @@ const Profile = ({ navigation }: any) => {
     mode: 'date',
     show: false,
   });
+
   const changeSelectedDate = (event: any, selectedDate: any) => {
     if (selectedDate) {
       setDate({ ...date, myDate: selectedDate, show: false });
@@ -156,6 +164,36 @@ const Profile = ({ navigation }: any) => {
   const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
   const [selectedCity, setSelectedCity] = useState<any>(null);
 
+  // Function to scroll to specific position
+  const scrollToPosition = (y: number) => {
+    scrollViewRef.current?.scrollTo({ y, animated: true });
+  };
+
+  // Function to handle dropdown focus for scrolling
+  const handleDropdownFocus = (dropdownName: string) => {
+    let scrollPosition = 0;
+
+    switch (dropdownName) {
+      case 'country':
+        scrollPosition = 400;
+        break;
+      case 'state':
+        scrollPosition = 500;
+        break;
+      case 'district':
+        scrollPosition = 600;
+        break;
+      case 'city':
+        scrollPosition = 700;
+        break;
+      default:
+        scrollPosition = 0;
+    }
+
+    setTimeout(() => {
+      scrollToPosition(scrollPosition);
+    }, 300);
+  };
 
   const takePhotoFromCamera = () => {
     requestMultiple([
@@ -204,6 +242,7 @@ const Profile = ({ navigation }: any) => {
       }
     });
   };
+
   const selectPhotoFromGallery = () => {
     requestMultiple([
       PERMISSIONS.ANDROID.CAMERA,
@@ -271,6 +310,7 @@ const Profile = ({ navigation }: any) => {
       return false;
     }
   };
+
   const updateProfile = async () => {
     if (checkValidation()) {
       return;
@@ -315,6 +355,7 @@ const Profile = ({ navigation }: any) => {
       console.log('error...', error);
     }
   };
+
   const UserGet = async () => {
     try {
       const res = await apiPost('api/appUser/get', {
@@ -355,11 +396,10 @@ const Profile = ({ navigation }: any) => {
       if (country) {
         setSelectedCountry(country);
         setInput(prev => ({ ...prev, country }));
-        getStateList(country); // auto-load states
+        getStateList(country);
       }
     }
   };
-
 
   const getStateList = async (country: any) => {
     const res = await apiPost('api/state/get', {
@@ -375,7 +415,7 @@ const Profile = ({ navigation }: any) => {
       if (state) {
         setSelectedState(state);
         setInput(prev => ({ ...prev, state }));
-        getDistrictList(state); // auto-load districts
+        getDistrictList(state);
       }
     }
   };
@@ -399,7 +439,7 @@ const Profile = ({ navigation }: any) => {
   };
 
   const getCityList = async (state: any) => {
-    const res = await apiPost('api/city/get', {
+    const res = await apiPost('api/district/get', {
       filter: ` AND STATUS = 1 `,
     });
 
@@ -419,12 +459,21 @@ const Profile = ({ navigation }: any) => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.White }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <ScrollView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+
+      <Animated.ScrollView
+        ref={scrollViewRef}
+        style={[{ marginBottom: Sizes.ScreenPadding }, animatedStyle]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}>
+        contentContainerStyle={{
+          flexGrow: 1,
+          // paddingBottom: 100, 
+        }}
+        keyboardDismissMode="on-drag"
+      >
+
         <View style={{ flex: 1, backgroundColor: Colors.White }}>
           <View style={{ flex: 1 }}>
             <View
@@ -543,9 +592,9 @@ const Profile = ({ navigation }: any) => {
               </Animated.View>
             </View>
 
-            <Animated.ScrollView
+            <Animated.View
               style={[{ marginBottom: Sizes.ScreenPadding }, animatedStyle]}
-              showsVerticalScrollIndicator={false}>
+            >
               <View style={{ marginHorizontal: Sizes.ScreenPadding }}>
                 <Animated.View
                   entering={FadeInDown.delay(100).duration(1000).springify()}>
@@ -682,10 +731,10 @@ const Profile = ({ navigation }: any) => {
                   />
                 </Animated.View>
 
-
                 <Animated.View
                   entering={FadeInDown.delay(200).duration(800).springify()}>
                   <Dropdown
+                    ref={countryDropdownRef}
                     label="Country"
                     data={countryList}
                     value={selectedCountry}
@@ -694,9 +743,10 @@ const Profile = ({ navigation }: any) => {
                     placeholder="Select Country"
                     onChange={(val: any) => {
                       setSelectedCountry(val);
-                      getStateList(val); // Load states on country change
-                      setInput({ ...input, country: val, state: null, district: null });
+                      getStateList(val);
+                      setInput({ ...input, country: val, state: null, district: null, city: null });
                     }}
+                    onFocus={() => handleDropdownFocus('country')}
                     imp
                     search
                   />
@@ -707,6 +757,7 @@ const Profile = ({ navigation }: any) => {
                 <Animated.View
                   entering={FadeInDown.delay(400).duration(800).springify()}>
                   <Dropdown
+                    ref={stateDropdownRef}
                     label="State"
                     data={stateList}
                     value={selectedState}
@@ -719,6 +770,7 @@ const Profile = ({ navigation }: any) => {
                       getDistrictList(val);
                       getCityList(val);
                     }}
+                    onFocus={() => handleDropdownFocus('state')}
                     imp
                     search
                   />
@@ -729,6 +781,7 @@ const Profile = ({ navigation }: any) => {
                 <Animated.View
                   entering={FadeInDown.delay(600).duration(800).springify()}>
                   <Dropdown
+                    ref={districtDropdownRef}
                     label="District"
                     data={districtList}
                     value={selectedDistrict}
@@ -739,6 +792,7 @@ const Profile = ({ navigation }: any) => {
                       setSelectedDistrict(val);
                       setInput({ ...input, district: val });
                     }}
+                    onFocus={() => handleDropdownFocus('district')}
                     imp
                     search
                   />
@@ -747,9 +801,10 @@ const Profile = ({ navigation }: any) => {
                 <View style={{ height: Sizes.ScreenPadding }}></View>
 
                 <Animated.View
-                  entering={FadeInDown.delay(600).duration(800).springify()}
+                  entering={FadeInDown.delay(800).duration(800).springify()}
                   style={{ marginBottom: 20 }}>
                   <Dropdown
+                    ref={cityDropdownRef}
                     label="City"
                     data={cityList}
                     value={selectedCity}
@@ -760,6 +815,7 @@ const Profile = ({ navigation }: any) => {
                       setSelectedCity(val);
                       setInput({ ...input, city: val });
                     }}
+                    onFocus={() => handleDropdownFocus('city')}
                     imp
                     search
                   />
@@ -767,7 +823,7 @@ const Profile = ({ navigation }: any) => {
 
                 <View style={{ height: Sizes.ScreenPadding }}></View>
               </View>
-            </Animated.ScrollView>
+            </Animated.View>
 
             <View
               style={{
@@ -797,28 +853,14 @@ const Profile = ({ navigation }: any) => {
               onChange={changeSelectedDate}
             />
           )}
-          {/* {openModal.city && (
-        <ModalPicker
-          title=" "
-          visible={openModal.city}
-          onClose={() => {
-            setOpenModal({...openModal, city: false});
-          }}
-          data={data.city}
-          labelField={'NAME'}
-          onChange={item => {
-            setInput({...input, city: item});
-          }}
-          value={input.city}
-        />
-      )} */}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 export default Profile;
+
 const styles = StyleSheet.create({
   gradient: {
     ...StyleSheet.absoluteFillObject,

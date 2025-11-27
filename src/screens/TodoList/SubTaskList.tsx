@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState, useCallback} from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -6,17 +6,17 @@ import {
   BackHandler,
   TextInput as InputText,
 } from 'react-native';
-import {apiPut, useSelector} from '../../Modules';
-import {Header, Icon, TextInput, Toast} from '../../Components';
-import {Checkbox} from 'react-native-paper';
-import {StackProps} from '../../routes';
+import { apiPut, useSelector } from '../../Modules';
+import { Header, Icon, TextInput, Toast } from '../../Components';
+import { Checkbox } from 'react-native-paper';
+import { StackProps } from '../../routes';
 import moment from 'moment';
 
 type Props = StackProps<'SubTaskList'>;
-const SubTaskList = ({navigation, route}: Props) => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {member} = useSelector(state => state.member);
-  const {item} = route.params;
+const SubTaskList = ({ navigation, route }: Props) => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { member } = useSelector(state => state.member);
+  const { item } = route.params;
   const inputRefs = useRef<any>([]);
   const [inputs, setInputs] = useState(
     item?.DESCRIPTION ? JSON.parse(item.DESCRIPTION) : [],
@@ -31,7 +31,7 @@ const SubTaskList = ({navigation, route}: Props) => {
   const handleInputChange = useCallback(
     (text: string, index: number) => {
       const newInputs = inputs.map((input: any, i: any) =>
-        i === index ? {...input, text} : input,
+        i === index ? { ...input, text } : input,
       );
       setInputs(newInputs);
     },
@@ -49,7 +49,7 @@ const SubTaskList = ({navigation, route}: Props) => {
 
   const handleDone = useCallback(() => {
     if (currentInput.trim()) {
-      setInputs([...inputs, {status: 0, text: currentInput.trim()}]);
+      setInputs([...inputs, { status: 0, text: currentInput.trim() }]);
       setCurrentInput('');
       setTimeout(() => {
         currentInputRef.current.focus();
@@ -85,7 +85,7 @@ const SubTaskList = ({navigation, route}: Props) => {
   const toggleDateSelection = useCallback((item: any) => {
     setInputs((prevData: any[]) => {
       return prevData.map(it =>
-        it.text === item.text ? {...it, status: it.status === 1 ? 0 : 1} : it,
+        it.text === item.text ? { ...it, status: it.status === 1 ? 0 : 1 } : it,
       );
     });
   }, []);
@@ -99,12 +99,17 @@ const SubTaskList = ({navigation, route}: Props) => {
       let body = {
         MEMBER_ID: member?.ID,
         ID: item.ID,
-        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME: new Date()).format('YYYY-MM-DD HH:mm:ss'),
-//        CREATED_DATETIME: item.CREATED_DATETIME,
+        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME : new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        //        CREATED_DATETIME: item.CREATED_DATETIME,
         TITLE: item.TITLE,
         DESCRIPTION: inputs.length == 0 ? '' : JSON.stringify(inputs),
         IS_REMIND: item.IS_REMIND,
-        REMIND_DATETIME: moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss'),
+        REMIND_DATETIME:
+          item.IS_REMIND == 1 &&
+            item.REMIND_DATETIME &&
+            moment(item.REMIND_DATETIME).isValid()
+            ? moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss')
+            : null,
         REMIND_TYPE: item.REMIND_TYPE,
         IS_COMPLETED: updateStatus ? 1 : 0,
         STATUS: 1,
@@ -143,7 +148,7 @@ const SubTaskList = ({navigation, route}: Props) => {
   );
 
   return (
-    <View style={{flex: 1, backgroundColor: '#EAEDED'}}>
+    <View style={{ flex: 1, backgroundColor: '#EAEDED' }}>
       <Header
         label={item.TITLE}
         onBack={() => {
@@ -204,7 +209,7 @@ const SubTaskList = ({navigation, route}: Props) => {
             </View>
             <TouchableOpacity
               activeOpacity={0.8}
-              hitSlop={{left: 10, right: 10, top: 10, bottom: 10}}
+              hitSlop={{ left: 10, right: 10, top: 10, bottom: 10 }}
               onPress={() => handleDone()}>
               <Icon
                 name="pluscircleo"
@@ -233,7 +238,7 @@ const SubTaskList = ({navigation, route}: Props) => {
               }}>
               <View
                 style={{
-                  transform: [{scale: 1}],
+                  transform: [{ scale: 1 }],
                   marginBottom: Sizes.Base,
                 }}>
                 <Checkbox

@@ -8,24 +8,24 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import React, {useState} from 'react';
-import {StackProps} from '../../routes';
-import {apiPost, apiPut, useSelector} from '../../Modules';
-import {Header, Icon, Modal, TextButton} from '../../Components';
+import React, { useState } from 'react';
+import { StackProps } from '../../routes';
+import { apiPost, apiPut, useSelector } from '../../Modules';
+import { Header, Icon, Modal, TextButton } from '../../Components';
 import FloatingAdd from '../../Components/FloatingAdd';
 import AddTodoTask from './AddTodoTask';
 import moment from 'moment';
-import {checklist} from '../../../assets';
-import {Checkbox} from 'react-native-paper';
-import {WEEKLY_PLANNER_INTERFACE} from '../../Modules/interface';
-import {useFocusEffect} from '@react-navigation/native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
-import {BannerAds} from '../../Modules/AdsUtils';
+import { checklist } from '../../../assets';
+import { Checkbox } from 'react-native-paper';
+import { WEEKLY_PLANNER_INTERFACE } from '../../Modules/interface';
+import { useFocusEffect } from '@react-navigation/native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { BannerAds } from '../../Modules/AdsUtils';
 
 type Props = StackProps<'TodoList'>;
-const TodoList = ({navigation}: Props) => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {member} = useSelector(state => state.member);
+const TodoList = ({ navigation }: Props) => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { member } = useSelector(state => state.member);
   const [modal, setModal] = useState({
     createTask: false,
     isDeleteItem: false,
@@ -99,31 +99,38 @@ const TodoList = ({navigation}: Props) => {
         item.IS_SUB_TASK == 0
           ? item.DESCRIPTION
           : item.DESCRIPTION.length > 0
-          ? JSON.parse(item.DESCRIPTION)
-          : '';
+            ? JSON.parse(item.DESCRIPTION)
+            : '';
       const changeData =
         item.IS_SUB_TASK == 0
           ? item.DESCRIPTION
           : item?.DESCRIPTION.length > 0
-          ? convertData.map((it: any) => {
-              return {...it, status: item.IS_COMPLETED == 0 ? 1 : 0};
+            ? convertData.map((it: any) => {
+              return { ...it, status: item.IS_COMPLETED == 0 ? 1 : 0 };
             })
-          : '';
+            : '';
       let body = {
         MEMBER_ID: member?.ID,
         ID: item.ID,
-        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME: new Date()).format('YYYY-MM-DD HH:mm:ss'),
-        
+        CREATED_DATETIME: moment(item?.CREATED_DATETIME ? item?.CREATED_DATETIME : new Date()).format('YYYY-MM-DD HH:mm:ss'),
+
         // CREATED_DATETIME: item.CREATED_DATETIME,
         TITLE: item.TITLE,
+        // Create the body for the API request
         DESCRIPTION:
           item.IS_SUB_TASK == 0
             ? item.DESCRIPTION
             : changeData
-            ? JSON.stringify(changeData)
-            : changeData,
+
+              ? JSON.stringify(changeData)
+              : changeData,
         IS_REMIND: item.IS_REMIND,
-        REMIND_DATETIME: moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss'),
+        REMIND_DATETIME:
+          item.IS_REMIND == 1 &&
+            item.REMIND_DATETIME &&
+            moment(item.REMIND_DATETIME).isValid()
+            ? moment(item.REMIND_DATETIME).format('YYYY-MM-DD HH:mm:ss')
+            : null,
         REMIND_TYPE: item.REMIND_TYPE,
         IS_COMPLETED: item.IS_COMPLETED == 0 ? 1 : 0,
         STATUS: 1,
@@ -139,18 +146,20 @@ const TodoList = ({navigation}: Props) => {
     } catch (error) {
       console.log('err,,,....', error);
     }
+    // Make the API request
   };
   const DeleteTask = async () => {
-    setModal({...modal, deleteLoading: true});
+    // Get the tasks again
+    setModal({ ...modal, deleteLoading: true });
     try {
       let body = deleteItem.map((item: any) => {
         return item.ID;
       });
-      const res = await apiPost('api/memberTodo/remove', {IDS: body});
+      const res = await apiPost('api/memberTodo/remove', { IDS: body });
       if (res && res.code == 200) {
         setDeleteItem([]);
-        setModal({...modal, deleteLoading: false});
-        setModal({...modal, isDeleteItem: false, openDeleteModal: false});
+        setModal({ ...modal, deleteLoading: false });
+        setModal({ ...modal, isDeleteItem: false, openDeleteModal: false });
         getTasks();
       }
     } catch (error) {
@@ -185,8 +194,8 @@ const TodoList = ({navigation}: Props) => {
       backgroundColor: isItemInDeleteList
         ? '#ADD8E6'
         : item.IS_COMPLETED === 1
-        ? '#EBF5FB'
-        : Colors.White,
+          ? '#EBF5FB'
+          : Colors.White,
     };
     const count =
       item.IS_SUB_TASK == 1 &&
@@ -217,12 +226,12 @@ const TodoList = ({navigation}: Props) => {
               toggleDeleteItem(item);
             } else {
               item.IS_SUB_TASK == 1
-                ? navigation.navigate('SubTaskList', {item})
+                ? navigation.navigate('SubTaskList', { item })
                 : null;
             }
           }}
           onLongPress={() => {
-            setModal({...modal, isDeleteItem: true});
+            setModal({ ...modal, isDeleteItem: true });
             setDeleteItem((prevData: any) => [...prevData, item]);
           }}>
           <Text
@@ -242,7 +251,7 @@ const TodoList = ({navigation}: Props) => {
             }}>
             <View
               style={{
-                transform: [{scale: 1}],
+                transform: [{ scale: 1 }],
                 paddingLeft: Sizes.Base,
               }}>
               <Checkbox
@@ -286,9 +295,8 @@ const TodoList = ({navigation}: Props) => {
                 marginLeft: 36,
                 marginTop: -4,
               }}>
-              {`${count} of ${JSON.parse(item.DESCRIPTION).length} ${
-                count > 1 ? 'tasks' : 'task'
-              } completed`}
+              {`${count} of ${JSON.parse(item.DESCRIPTION).length} ${count > 1 ? 'tasks' : 'task'
+                } completed`}
             </Text>
           )}
         </TouchableOpacity>
@@ -296,7 +304,7 @@ const TodoList = ({navigation}: Props) => {
     );
   };
   return (
-    <View style={{flex: 1, backgroundColor: '#EAEDED'}}>
+    <View style={{ flex: 1, backgroundColor: '#EAEDED' }}>
       <Header
         label="Daily Organizer"
         onBack={() => {
@@ -311,7 +319,7 @@ const TodoList = ({navigation}: Props) => {
             onPress={() => {
               navigation.navigate('TodoCalenderFilter');
             }}
-            style={{marginLeft: Sizes.Radius}}
+            style={{ marginLeft: Sizes.Radius }}
           />
         }
         onSearch={(txt: any) => {
@@ -347,8 +355,8 @@ const TodoList = ({navigation}: Props) => {
           />
         </View>
       </View> */}
-      <View style={{flex: 1}}>
-        <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
           {modal.isDeleteItem && deleteItem.length > 0 && (
             <View
               style={{
@@ -360,7 +368,7 @@ const TodoList = ({navigation}: Props) => {
               }}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={{flex: 0.1}}
+                style={{ flex: 0.1 }}
                 onPress={() => {
                   setModal({
                     ...modal,
@@ -375,27 +383,26 @@ const TodoList = ({navigation}: Props) => {
                 }}>
                 <Image
                   source={checklist}
-                  style={{height: 27, width: 32, marginBottom: 4}}
+                  style={{ height: 27, width: 32, marginBottom: 4 }}
                 />
               </TouchableOpacity>
-              <View style={{flex: 0.8}}>
+              <View style={{ flex: 0.8 }}>
                 <Text
                   style={{
                     ...Fonts.Medium2,
                     color: Colors.PrimaryText1,
                     textAlign: 'center',
                   }}>
-                  {`${deleteItem.length} ${
-                    deleteItem.length > 1 ? 'items' : 'item'
-                  } selected`}
+                  {`${deleteItem.length} ${deleteItem.length > 1 ? 'items' : 'item'
+                    } selected`}
                 </Text>
               </View>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={{flex: 0.1}}
+                style={{ flex: 0.1 }}
                 onPress={() => {
                   setDeleteItem([]);
-                  setModal({...modal, isDeleteItem: false});
+                  setModal({ ...modal, isDeleteItem: false });
                 }}>
                 <Icon
                   name="close"
@@ -438,26 +445,26 @@ const TodoList = ({navigation}: Props) => {
                 }}>
                 <Image
                   source={require('../../../assets/images/noTasks.png')}
-                  style={{height: 220, width: 210}}
+                  style={{ height: 220, width: 210 }}
                 />
-                <Text style={{...Fonts.Medium2, color: Colors.Primary}}>
+                <Text style={{ ...Fonts.Medium2, color: Colors.Primary }}>
                   Your To-Do is Empty
                 </Text>
               </View>
             ) : (
-              <View style={{flex: 1, marginVertical: Sizes.Padding}}>
+              <View style={{ flex: 1, marginVertical: Sizes.Padding }}>
                 <FlatList
                   showsVerticalScrollIndicator={false}
                   data={
                     searchText.length == 0
                       ? taskData.pending
                       : taskData.pending.filter(
-                          (item: WEEKLY_PLANNER_INTERFACE) => {
-                            return item.TITLE.toLowerCase().includes(
-                              searchText.toLowerCase(),
-                            );
-                          },
-                        )
+                        (item: WEEKLY_PLANNER_INTERFACE) => {
+                          return item.TITLE.toLowerCase().includes(
+                            searchText.toLowerCase(),
+                          );
+                        },
+                      )
                   }
                   contentContainerStyle={{}}
                   renderItem={renderTask}
@@ -481,14 +488,14 @@ const TodoList = ({navigation}: Props) => {
                     searchText.length == 0
                       ? taskData.completed
                       : taskData.completed.filter(
-                          (item: WEEKLY_PLANNER_INTERFACE) => {
-                            return item.TITLE.toLowerCase().includes(
-                              searchText.toLowerCase(),
-                            );
-                          },
-                        )
+                        (item: WEEKLY_PLANNER_INTERFACE) => {
+                          return item.TITLE.toLowerCase().includes(
+                            searchText.toLowerCase(),
+                          );
+                        },
+                      )
                   }
-                  contentContainerStyle={{marginBottom: Sizes.ScreenPadding}}
+                  contentContainerStyle={{ marginBottom: Sizes.ScreenPadding }}
                   renderItem={renderTask}
                   keyExtractor={(item, index) => index.toString()}
                 />
@@ -516,12 +523,12 @@ const TodoList = ({navigation}: Props) => {
                 color={Colors.Primary}
                 size={25}
                 onPress={() => {
-                  setModal({...modal, openDeleteModal: true});
+                  setModal({ ...modal, openDeleteModal: true });
                 }}
               />
               <Text
                 onPress={() => {
-                  setModal({...modal, openDeleteModal: true});
+                  setModal({ ...modal, openDeleteModal: true });
                 }}
                 style={{
                   ...Fonts.Regular2,
@@ -555,12 +562,12 @@ const TodoList = ({navigation}: Props) => {
                   color={Colors.Primary}
                   size={25}
                   onPress={() => {
-                    setModal({...modal, createTask: true});
+                    setModal({ ...modal, createTask: true });
                   }}
                 />
                 <Text
                   onPress={() => {
-                    setModal({...modal, createTask: false});
+                    setModal({ ...modal, createTask: false });
                   }}
                   style={{
                     ...Fonts.Regular2,
@@ -575,7 +582,7 @@ const TodoList = ({navigation}: Props) => {
         ) : (
           <FloatingAdd
             onPress={() => {
-              setModal({...modal, createTask: true});
+              setModal({ ...modal, createTask: true });
             }}
             style={{
               elevation: Sizes.Base,
@@ -587,10 +594,10 @@ const TodoList = ({navigation}: Props) => {
         <AddTodoTask
           visible={modal.createTask}
           onClose={() => {
-            setModal({...modal, createTask: false});
+            setModal({ ...modal, createTask: false });
           }}
           onSuccess={() => {
-            setModal({...modal, createTask: false, isDeleteItem: false});
+            setModal({ ...modal, createTask: false, isDeleteItem: false });
             setDeleteItem([]);
             getTasks();
           }}
@@ -601,10 +608,10 @@ const TodoList = ({navigation}: Props) => {
         <Modal
           isVisible={modal.openDeleteModal}
           onClose={() => {
-            setModal({...modal, openDeleteModal: false});
+            setModal({ ...modal, openDeleteModal: false });
           }}
-          containerStyle={{justifyContent: 'flex-end'}}
-          style={{borderRadius: Sizes.Padding}}>
+          containerStyle={{ justifyContent: 'flex-end' }}
+          style={{ borderRadius: Sizes.Padding }}>
           <View style={{}}>
             <Text
               style={{
@@ -612,21 +619,20 @@ const TodoList = ({navigation}: Props) => {
                 ...Fonts.Bold2,
                 textAlign: 'center',
               }}>
-              {`Delete ${deleteItem.length} ${
-                deleteItem.length > 1 ? 'Tasks' : 'Task'
-              }?`}
+              {`Delete ${deleteItem.length} ${deleteItem.length > 1 ? 'Tasks' : 'Task'
+                }?`}
             </Text>
-            <View style={{flexDirection: 'row', marginTop: Sizes.Padding}}>
+            <View style={{ flexDirection: 'row', marginTop: Sizes.Padding }}>
               <TextButton
                 isBorder
-                style={{flex: 1, borderColor: Colors.Secondary}}
+                style={{ flex: 1, borderColor: Colors.Secondary }}
                 label="Cancel"
                 loading={false}
-                onPress={() => setModal({...modal, openDeleteModal: false})}
+                onPress={() => setModal({ ...modal, openDeleteModal: false })}
               />
-              <View style={{width: Sizes.Radius}} />
+              <View style={{ width: Sizes.Radius }} />
               <TextButton
-                style={{flex: 1}}
+                style={{ flex: 1 }}
                 label="Delete"
                 loading={modal.deleteLoading}
                 onPress={() => {

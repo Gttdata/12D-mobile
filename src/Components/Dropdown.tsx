@@ -1,7 +1,8 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, ViewStyle, TextStyle } from 'react-native';
 import { Dropdown as DropDown } from 'react-native-element-dropdown';
 import { useSelector } from '../Modules';
+
 interface DropdownProps {
   data: any[];
   onChange: (value: any) => void;
@@ -22,8 +23,10 @@ interface DropdownProps {
   imp?: boolean;
   search?: boolean;
   iconStyle?: any;
+  onFocus?: () => void; // Add onFocus prop
 }
-const Dropdown: React.FC<DropdownProps> = ({
+
+const Dropdown = forwardRef<any, DropdownProps>(({
   data,
   onChange,
   value,
@@ -43,8 +46,25 @@ const Dropdown: React.FC<DropdownProps> = ({
   dropdownStyle,
   search,
   iconStyle,
-}) => {
+  onFocus, // Destructure onFocus
+}, ref) => {
   const { Colors, Fonts, Sizes } = useSelector(state => state.app);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Expose focus methods via ref if needed
+  useImperativeHandle(ref, () => ({
+    // You can add methods here if needed
+  }));
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    onFocus?.(); // Call the onFocus callback if provided
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+
   return (
     <View style={{ width: '100%' }}>
       {label && (
@@ -70,11 +90,13 @@ const Dropdown: React.FC<DropdownProps> = ({
               ? Colors.Disable
               : error
                 ? Colors.error
-                : Colors.Primary2,
+                : isFocused
+                  ? Colors.Primary // Highlight when focused
+                  : Colors.Primary2,
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: Colors.White,
-            borderWidth: 0,
+            borderWidth: isFocused ? 1 : 0, // Show border when focused
             elevation: 6,
             shadowColor: Colors.Primary,
           },
@@ -82,18 +104,21 @@ const Dropdown: React.FC<DropdownProps> = ({
         ]}>
         {leftChild ? leftChild : null}
         <DropDown
-        dropdownPosition='bottom'
+          dropdownPosition='bottom'
           data={data}
           value={value}
           disable={disable}
+          keyboardAvoiding={false}
           iconStyle={{ height: 25, width: 27, ...iconStyle }}
           labelField={labelField ? labelField : 'label'}
           valueField={valueField ? valueField : 'value'}
           placeholder={placeholder}
           onChange={onChange}
           search={search}
+          onFocus={handleFocus} // Add onFocus handler
+          onBlur={handleBlur} // Add onBlur handler
           inputSearchStyle={{
-            height: 35, // or less
+            height: 35,
             paddingHorizontal: 10,
             borderRadius: 8,
             ...Fonts.Regular3,
@@ -113,7 +138,6 @@ const Dropdown: React.FC<DropdownProps> = ({
             transform: [{ scaleY: 1 }]
           }}
           flatListProps={{
-            
             ListEmptyComponent: () => (
               <View style={{ alignItems: 'center' }}>
                 <Text
@@ -124,7 +148,6 @@ const Dropdown: React.FC<DropdownProps> = ({
                     textAlignVertical: 'center',
                     justifyContent: 'center',
                     color: Colors.PrimaryText1,
-
                   }}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
@@ -184,5 +207,6 @@ const Dropdown: React.FC<DropdownProps> = ({
       </View>
     </View>
   );
-};
+});
+
 export default Dropdown;

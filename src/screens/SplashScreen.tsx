@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect} from 'react';
-import {View, Image, Alert, BackHandler, Text, Linking} from 'react-native';
-import {checkInternet, classFilter, displayYear, hp, wp} from '../Functions';
-import {FemaleUser, logo} from '../../assets';
-import {Reducers, apiPost, apiPut, useDispatch, useSelector} from '../Modules';
+import React, { useEffect } from 'react';
+import { View, Image, Alert, BackHandler, Text, Linking } from 'react-native';
+import { checkInternet, classFilter, displayYear, hp, wp } from '../Functions';
+import { FemaleUser, logo } from '../../assets';
+import { Reducers, apiPost, apiPut, useDispatch, useSelector } from '../Modules';
 import moment from 'moment';
-import {MEMBER_INTERFACE} from '../Modules/interface';
+import { MEMBER_INTERFACE } from '../Modules/interface';
 import DeviceInfo from 'react-native-device-info';
 import { PACKAGE_NAME } from '../Modules/service';
 const SplashScreen = () => {
@@ -43,10 +43,10 @@ const SplashScreen = () => {
                 );
                 const currentDate = moment(new Date()).format('YYYY-MM-DD');
                 if (memberData.SUBSCRIPTION_EXPIRE_DATE) {
-                 
-                   console.log('currentDate', memberData.SUBSCRIPTION_EXPIRE_DATE < currentDate);
-                   console.log('currentDate', memberData.SUBSCRIPTION_EXPIRE_DATE );
-                   console.log('currentDate',  currentDate);
+
+                  console.log('currentDate', memberData.SUBSCRIPTION_EXPIRE_DATE < currentDate);
+                  console.log('currentDate', memberData.SUBSCRIPTION_EXPIRE_DATE);
+                  console.log('currentDate', currentDate);
                   if (memberData.SUBSCRIPTION_EXPIRE_DATE < currentDate) {
                     AsyncStorage.setItem('SUBSCRIPTION_DETAILS', '');
                   }
@@ -88,60 +88,60 @@ const SplashScreen = () => {
       Alert.alert(
         'Something went wrong',
         'Please try again later',
-        [{text: 'OK', onPress: () => BackHandler.exitApp()}],
-        {cancelable: false},
+        [{ text: 'OK', onPress: () => BackHandler.exitApp() }],
+        { cancelable: false },
       );
     }
   };
- 
-const CheckVersion = async () => {
-  try {
-    // 1. Get version info from server
-    const res = await apiPost('globalSettings/getVersion', {});
 
-    if (res && res.code === 200) {
-      const latestVersion = res?.data?.[0]?.CUR_VERSION;
+  const CheckVersion = async () => {
+    try {
+      // 1. Get version info from server
+      const res = await apiPost('globalSettings/getVersion', {});
 
-      // 2. Get installed version
-      const currentVersion = DeviceInfo.getVersion(); // e.g., "1.0.0"
+      if (res && res.code === 200) {
+        const latestVersion = res?.data?.[0]?.CUR_VERSION;
 
-      console.log('Current:', currentVersion, 'Latest:', latestVersion);
+        // 2. Get installed version
+        const currentVersion = DeviceInfo.getVersion(); // e.g., "1.0.0"
 
-      // 3. Compare versions
-      if (currentVersion < latestVersion) {
-        Alert.alert(
-          'Update Required',
-          'A new version of the app is available. Please update to continue.',
-          [
-            {
-              text: 'Update Now',
-              onPress: () => {
-                const playStoreUrl = `market://details?id=${PACKAGE_NAME}`;
-                const fallbackUrl = `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`;
+        console.log('Current:', currentVersion, 'Latest:', latestVersion);
 
-                Linking.openURL(playStoreUrl).catch(() => {
-                  Linking.openURL(fallbackUrl);
-                });
+        // 3. Compare versions
+        if (currentVersion < latestVersion) {
+          Alert.alert(
+            'Update Required',
+            'A new version of the app is available. Please update to continue.',
+            [
+              {
+                text: 'Update Now',
+                onPress: () => {
+                  const playStoreUrl = `market://details?id=${PACKAGE_NAME}`;
+                  const fallbackUrl = `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`;
 
-                // Optional: Exit app after redirection
-                BackHandler.exitApp();
+                  Linking.openURL(playStoreUrl).catch(() => {
+                    Linking.openURL(fallbackUrl);
+                  });
+
+                  // Optional: Exit app after redirection
+                  BackHandler.exitApp();
+                },
               },
-            },
-          ],
-          { cancelable: false }
-        );
+            ],
+            { cancelable: false }
+          );
+        }
       }
+    } catch (error) {
+      console.warn(error);
+      Alert.alert(
+        'Something went wrong',
+        'Please try again later',
+        [{ text: 'OK', onPress: () => BackHandler.exitApp() }],
+        { cancelable: false }
+      );
     }
-  } catch (error) {
-    console.warn(error);
-    Alert.alert(
-      'Something went wrong',
-      'Please try again later',
-      [{ text: 'OK', onPress: () => BackHandler.exitApp() }],
-      { cancelable: false }
-    );
-  }
-};
+  };
 
   const getSubscriptionDetails = async (member: MEMBER_INTERFACE) => {
     try {
@@ -154,7 +154,7 @@ const CheckVersion = async () => {
           '' + res.data[0].PAID_AMOUNT,
         );
       }
-    } catch (error) {}
+    } catch (error) { }
   };
   const updateUser = async (item: MEMBER_INTERFACE) => {
     try {
@@ -170,12 +170,12 @@ const CheckVersion = async () => {
         LAST_VISIT_DATETIME: lastVisitDatetime,
         IDENTITY_NUMBER: item.IDENTITY_NUMBER,
         PROFILE_PHOTO: item.PROFILE_PHOTO,
-        STATUS:1
+        STATUS: 1
       };
       const res = await apiPut('api/appUser/update', body);
       if (res && res.code == 200) {
       }
-    } catch (error) {}
+    } catch (error) { }
   };
   const getMemberAllRoleData = async () => {
     const MOBILE_NUMBER = await AsyncStorage.getItem('MOBILE_NUMBER');
@@ -190,9 +190,9 @@ const CheckVersion = async () => {
         } else {
         }
       }
-    } catch (error) {}
+    } catch (error) { }
   };
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
   return (
     <View
       style={{

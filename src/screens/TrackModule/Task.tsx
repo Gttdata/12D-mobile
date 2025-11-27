@@ -102,8 +102,8 @@ const Task = ({ navigation, route }: Props) => {
         sortKey: "DIAMENTION_ID",
         sortValue: "ASC",
       });
-      console.log("TRACKBOOKTASKRES",trackBookTaskRes);
-      
+      console.log("TRACKBOOKTASKRES", trackBookTaskRes);
+
       let taskData = [];
       if (trackBookTaskRes && trackBookTaskRes.code === 200) {
         // console.log('\n\n..trackBookTaskRes...', trackBookTaskRes.data);
@@ -116,8 +116,8 @@ const Task = ({ navigation, route }: Props) => {
           ","
         )}) AND STATUS = 1 AND AGE_CATEGORY_ID = ${ageGroup}`,
       });
-      console.log("UNMAPPEDTASKRES",unMappedTaskRes);
-      
+      console.log("UNMAPPEDTASKRES", unMappedTaskRes);
+
 
       if (unMappedTaskRes && unMappedTaskRes.code === 200) {
         // console.log('\n\n..unMappedTaskRes...', unMappedTaskRes);
@@ -206,7 +206,7 @@ const Task = ({ navigation, route }: Props) => {
       console.log("error..", error);
     }
   };
-  console.log("TRACKBOOK_DATA", selectedAllData.length,type);
+  console.log("TRACKBOOK_DATA", selectedAllData.length, type);
   return (
     <View style={{ flex: 1, backgroundColor: Colors.Background }}>
       <Header
@@ -276,15 +276,15 @@ const Task = ({ navigation, route }: Props) => {
                 searchText.length == 0
                   ? taskData
                   : taskData.filter((item: TRACK_BOOK_TASK_DATA) => {
-                      const taskLabel = item.TASK_LABEL.toLowerCase().includes(
+                    const taskLabel = item.TASK_LABEL.toLowerCase().includes(
+                      searchText.toLowerCase()
+                    );
+                    const taskDescription =
+                      item.TASK_DESCRIPTIONS?.toLowerCase().includes(
                         searchText.toLowerCase()
                       );
-                      const taskDescription =
-                        item.TASK_DESCRIPTIONS?.toLowerCase().includes(
-                          searchText.toLowerCase()
-                        );
-                      return taskLabel || taskDescription;
-                    })
+                    return taskLabel || taskDescription;
+                  })
               }
               keyExtractor={(item, index) => index.toString()}
               showsVerticalScrollIndicator={false}
@@ -298,15 +298,15 @@ const Task = ({ navigation, route }: Props) => {
                 const isSelected =
                   type == "C"
                     ? selectedChallengeData.some(
-                        (it: any) =>
-                          it.QUESTION_ID === item.QUESTION_ID &&
-                          it.ID === item.ID
-                      )
+                      (it: any) =>
+                        it.QUESTION_ID === item.QUESTION_ID &&
+                        it.ID === item.ID
+                    )
                     : selectedTrackData.some(
-                        (it: any) =>
-                          it.QUESTION_ID === item.QUESTION_ID &&
-                          it.ID === item.ID
-                      );
+                      (it: any) =>
+                        it.QUESTION_ID === item.QUESTION_ID &&
+                        it.ID === item.ID
+                    );
                 return (
                   <TouchableOpacity
                     activeOpacity={item.TASK_PRIORITY == "M" ? 1 : 0.8}
@@ -314,8 +314,8 @@ const Task = ({ navigation, route }: Props) => {
                       item.TASK_PRIORITY == "M"
                         ? null
                         : type == "C"
-                        ? dispatch(Reducers.setSelectedChallengeData(item))
-                        : dispatch(Reducers.setSelectedTrackData(item));
+                          ? dispatch(Reducers.setSelectedChallengeData(item))
+                          : dispatch(Reducers.setSelectedTrackData(item));
                     }}
                     style={{
                       flex: 1,
@@ -323,8 +323,8 @@ const Task = ({ navigation, route }: Props) => {
                         item.TASK_PRIORITY == "M"
                           ? "#A3E4D7"
                           : isSelected
-                          ? Colors.Secondary
-                          : Colors.Background,
+                            ? Colors.Secondary
+                            : Colors.Background,
                       elevation: 6,
                       shadowColor: Colors.Primary,
                       padding: Sizes.Padding,
@@ -350,38 +350,38 @@ const Task = ({ navigation, route }: Props) => {
                         }}
                       >
                         {item.ENABLE_TIME == "00:00:00" &&
-                        item.DISABLE_TIME == "23:59:59"
+                          item.DISABLE_TIME == "23:59:59"
                           ? "Full Day"
                           : `${item.ENABLE_TIME}-${item.DISABLE_TIME}`}
                       </Text>
                       {(item.TASK_PRIORITY == "M" ||
                         item.TASK_PRIORITY == "R") && (
-                        <Text
-                          style={{
-                            ...Fonts.Medium3,
-                            fontSize: 9,
-                            color: Colors.White,
-                            textAlign: "right",
-                            paddingHorizontal: Sizes.Radius,
-                            paddingVertical: 4,
-                            backgroundColor:
-                              item.TASK_PRIORITY == "M"
-                                ? "#48C9B0"
-                                : Colors.Primary2,
-                            alignSelf: "flex-end",
-                            paddingLeft: Sizes.Padding,
-                            borderBottomLeftRadius: 18,
-                            borderTopRightRadius: Sizes.Base,
-                            position: "absolute",
-                            right: -Sizes.Padding,
-                            top: 4,
-                          }}
-                        >
-                          {item.TASK_PRIORITY == "M"
-                            ? "Mandatory"
-                            : "Recommended"}
-                        </Text>
-                      )}
+                          <Text
+                            style={{
+                              ...Fonts.Medium3,
+                              fontSize: 9,
+                              color: Colors.White,
+                              textAlign: "right",
+                              paddingHorizontal: Sizes.Radius,
+                              paddingVertical: 4,
+                              backgroundColor:
+                                item.TASK_PRIORITY == "M"
+                                  ? "#48C9B0"
+                                  : Colors.Primary2,
+                              alignSelf: "flex-end",
+                              paddingLeft: Sizes.Padding,
+                              borderBottomLeftRadius: 18,
+                              borderTopRightRadius: Sizes.Base,
+                              position: "absolute",
+                              right: -Sizes.Padding,
+                              top: 4,
+                            }}
+                          >
+                            {item.TASK_PRIORITY == "M"
+                              ? "Mandatory"
+                              : "Recommended"}
+                          </Text>
+                        )}
                     </View>
                     <View
                       style={{
@@ -434,46 +434,46 @@ const Task = ({ navigation, route }: Props) => {
           )}
         </View>
       </View>
-      
-      {((type === 'T' && selectedAllData.length >= 5) || (type !== 'T' && selectedAllData.length === 1)) &&<View style={{flexDirection: 'row', alignItems: 'center',padding:Sizes.Padding}}>
-                  <Checkbox
-                    color={Colors.Primary}
-                    status={termsAndCondition ? 'checked' : 'unchecked'}
-                    onPress={() => {
-                      setTermsAndCondition(!termsAndCondition);
-                    }}
-                  />
-                  <Text
-                    onPress={() => {
-                      setTermsAndCondition(!termsAndCondition);
-                    }}
-                    style={{
-                      textAlign: 'center',
-                      ...Fonts.Medium3,
-                      color: Colors.PrimaryText,
-                      flex: 1,
-                    }}>
-                    {'I agree to all '}
-                    <Text
-                      onPress={() => {
-                        // Linking.openURL('https://www.12dimensionsapp.in/terms.html');
-                        // setOpenTermsModal(true);
-                        navigation.navigate('TrackTermsAndConditions')
-                      }}
-                      style={{
-                        ...Fonts.Bold3,
-                        color: 'blue',
-                      }}>
-                      Terms and Conditions, Disclaimer and Privacy policy
-                    </Text>
-                    {' of APP'}
-                  </Text>
-                </View>}
+
+      {((type === 'T' && selectedAllData.length >= 5) || (type !== 'T' && selectedAllData.length === 1)) && <View style={{ flexDirection: 'row', alignItems: 'center', padding: Sizes.Padding }}>
+        <Checkbox
+          color={Colors.Primary}
+          status={termsAndCondition ? 'checked' : 'unchecked'}
+          onPress={() => {
+            setTermsAndCondition(!termsAndCondition);
+          }}
+        />
+        <Text
+          onPress={() => {
+            setTermsAndCondition(!termsAndCondition);
+          }}
+          style={{
+            textAlign: 'center',
+            ...Fonts.Medium3,
+            color: Colors.PrimaryText,
+            flex: 1,
+          }}>
+          {'I agree to all '}
+          <Text
+            onPress={() => {
+              // Linking.openURL('https://www.12dimensionsapp.in/terms.html');
+              // setOpenTermsModal(true);
+              navigation.navigate('TrackTermsAndConditions')
+            }}
+            style={{
+              ...Fonts.Bold3,
+              color: 'blue',
+            }}>
+            Terms and Conditions, Disclaimer and Privacy policy
+          </Text>
+          {' of APP'}
+        </Text>
+      </View>}
       <View style={{ flexDirection: "row", marginHorizontal: Sizes.Padding }}>
 
-      
 
-       
+
+
         <TextButton
           isBorder
           label="Go back to dimensions"
@@ -491,24 +491,24 @@ const Task = ({ navigation, route }: Props) => {
             if (type === "T") {
               if (selectedAllData.length < 5) {
                 Toast("Please select at least 5 tasks.");
-              }else if (termsAndCondition == false) {
+              } else if (termsAndCondition == false) {
                 Toast("Please accept terms and conditions.");
               }
-               else {
+              else {
                 addTasks(TRACKBOOK_DATA);
               }
             } else {
               if (selectedAllData.length < 1) {
                 Toast("Please select at least 1 task.");
-              }else if (termsAndCondition == false) {
+              } else if (termsAndCondition == false) {
                 Toast("Please accept terms and conditions.");
               }
-               else {
+              else {
                 addTasks(TRACKBOOK_DATA);
               }
             }
           }}
-          
+
           style={{ marginBottom: Sizes.Padding, flex: 1 }}
         />
       </View>

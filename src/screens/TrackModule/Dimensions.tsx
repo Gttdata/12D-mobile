@@ -102,7 +102,7 @@ const Dimensions = ({ navigation, route }: Props) => {
     setShowGoBachButton(optionData.length > 0);
 
     const subscriptionStr = await AsyncStorage.getItem('SUBSCRIPTION_DETAILS');
-    console.log('data******', subscriptionStr);
+    console.log('data******1', subscriptionStr);
 
     let dimensionIdFilter = '';
 
@@ -250,7 +250,7 @@ const Dimensions = ({ navigation, route }: Props) => {
                             fontSize: 16,
                             marginBottom: 4,
                           }}
-                          // numberOfLines={1}
+                        // numberOfLines={1}
                         >
                           {mainText}
                         </Text>

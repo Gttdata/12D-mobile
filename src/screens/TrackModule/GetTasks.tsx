@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { DAILY_TRACK_BOOK_TASK } from "../../Modules/interface";
 import {
   BASE_URL,
@@ -32,13 +32,13 @@ import {
   createSubmitApiFlagTable,
   setSubmitApiCalledFlag,
   getSubmitApiCalledFlag,
+  deleteTableData,
 } from "./db";
 import Days from "../../Components/Days";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BannerAds } from "../../Modules/AdsUtils";
 // @ts-ignore
 import Video from "react-native-video";
-
 import { useFocusEffect } from "@react-navigation/native";
 import Shimmer from "react-native-shimmer";
 import LottieView from "lottie-react-native";
@@ -93,6 +93,10 @@ const GetTasks = ({ navigation, route }: Props) => {
   const controlTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [videoDuration, setVideoDuration] = useState(0);
   const [shoExitModal, setShowExitModal] = useState(false);
+
+  // Throttle ref for progress handler
+  const progressHandlerRef = useRef<NodeJS.Timeout | null>(null);
+
   useFocusEffect(
     useCallback(() => {
       GetReward();
@@ -119,6 +123,12 @@ const GetTasks = ({ navigation, route }: Props) => {
     const subscriptionDetails = await AsyncStorage.getItem(
       "SUBSCRIPTION_DETAILS"
     );
+
+    let subscriptionData = null;
+    if (subscriptionDetails) {
+      subscriptionData = JSON.parse(subscriptionDetails);
+    }
+
     if (subscriptionDetails) {
       const subscriptionData = JSON.parse(subscriptionDetails);
       const startDate = moment(subscriptionData.START_DATE);
@@ -144,6 +154,9 @@ const GetTasks = ({ navigation, route }: Props) => {
               sortKey: "DIAMENTION_ID",
               sortValue: "ASC",
             });
+
+            console.log("USER TREACKBOOK", res);
+
             const checkStatus = res.data.every(
               (item: DAILY_TRACK_BOOK_TASK) => item.STATUS !== "0"
             );
@@ -158,10 +171,11 @@ const GetTasks = ({ navigation, route }: Props) => {
           }
         } else {
           const res = await apiPost("api/userTrackbook/get", {
-            filter: `AND USER_ID = ${member?.ID} AND DATE(ASSIGNED_DATE) = "${selectedDate}" `,
+            filter: `AND USER_ID = ${member?.ID} AND SUBSCRIPTION_DETAILS_ID = ${subscriptionData?.ID} AND DATE(ASSIGNED_DATE) = "${selectedDate}" `,
             sortKey: "DIAMENTION_ID",
             sortValue: "ASC",
           });
+          // console.log('--------------', res)
           if (res && res.code === 200) {
             if (res.data.length > 0) {
               try {
@@ -225,7 +239,7 @@ const GetTasks = ({ navigation, route }: Props) => {
     }
   };
 
-  const handleSelectButton = (item: DAILY_TRACK_BOOK_TASK, status: string) => {
+  const handleSelectButton = useCallback((item: DAILY_TRACK_BOOK_TASK, status: string) => {
     setTaskData((prevState) => {
       const updatedData = prevState.data.map((task) => {
         if (task.ID === item.ID) {
@@ -235,7 +249,7 @@ const GetTasks = ({ navigation, route }: Props) => {
       });
       return { ...prevState, data: updatedData };
     });
-  };
+  }, []);
 
   const goBack = async () => {
     try {
@@ -293,7 +307,11 @@ const GetTasks = ({ navigation, route }: Props) => {
       return 0;
     });
   };
-  const sortedData = sortTaskData(taskData.data);
+
+  // Memoized sorted data
+  const sortedData = useMemo(() => {
+    return sortTaskData(taskData.data);
+  }, [taskData.data]);
 
   const GetReward = async () => {
     const details: any = await AsyncStorage.getItem("VIDEO_DETAILS");
@@ -303,10 +321,11 @@ const GetTasks = ({ navigation, route }: Props) => {
       let res = await apiPost("api/userRewards/get", {
         filter: `AND USER_ANIMATION_DETAIL_ID = ${USER_ANIMATION_DETAIL_ID} `,
       });
+      console.log("GET REWARD", res);
+
       if (res && res.code == 200) {
         if (res.count == 0) {
           updateVideoTimingData();
-          // setUnlockVideo({...unlockVideo, showUnlockPopUp: true});
         } else {
           setUnlockVideo({
             ...unlockVideo,
@@ -346,6 +365,7 @@ const GetTasks = ({ navigation, route }: Props) => {
       console.log("error..", error);
     }
   };
+
   const getVideoDetails = async (Id: number) => {
     try {
       const res = await apiPost("api/userAnimationDetails/get", {
@@ -365,14 +385,477 @@ const GetTasks = ({ navigation, route }: Props) => {
     } catch (error) { }
   };
 
-  const showControls = () => {
+  // Optimized showControls with useCallback
+  const showControls = useCallback(() => {
     setControlsVisible(true);
     if (controlTimeoutRef.current) clearTimeout(controlTimeoutRef.current);
 
     controlTimeoutRef.current = setTimeout(() => {
       setControlsVisible(false);
     }, 5000);
-  };
+  }, []);
+
+  // Optimized progress handler with throttling
+  const handleProgress = useCallback((e: any) => {
+    // Throttle the progress updates
+    if (progressHandlerRef.current) return;
+
+    progressHandlerRef.current = setTimeout(() => {
+      setCurrentTime(e.currentTime);
+
+      if (!videoPaused && e.currentTime > animationVideoTime.startTime) {
+        isProgrammaticSeek.current = true;
+        videoRef.current.seek(animationVideoTime.startTime);
+        setVideoPaused(true);
+        setTimeout(() => {
+          isProgrammaticSeek.current = false;
+        }, 0);
+      }
+      progressHandlerRef.current = null;
+    }, 100); // Update every 100ms instead of every frame
+  }, [videoPaused, animationVideoTime.startTime]);
+
+  // Memoized control handlers
+  const handleSeekBack = useCallback(() => {
+    const newTime = Math.max(currentTime - 10, 0);
+    videoRef.current.seek(newTime);
+    setCurrentTime(newTime);
+  }, [currentTime]);
+
+  const handleSeekForward = useCallback(() => {
+    if (!videoPaused) {
+      const newTime = Math.min(currentTime + 10, videoDuration);
+      videoRef.current.seek(newTime);
+      setCurrentTime(newTime);
+    }
+  }, [currentTime, videoDuration, videoPaused]);
+
+  const handlePlayPause = useCallback(() => {
+    setVideoPaused(!videoPaused);
+    showControls();
+  }, [videoPaused, showControls]);
+
+  // Memoized video controls component
+  const videoControls = useMemo(() => {
+    if (!controlsVisible) return null;
+
+    return (
+      <>
+        <Slider
+          style={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 50,
+            left: 0,
+            right: 0,
+            zIndex: 3,
+          }}
+          minimumValue={0}
+          maximumValue={videoDuration}
+          value={currentTime}
+          minimumTrackTintColor="#FFFFFF"
+          maximumTrackTintColor="#888888"
+          thumbTintColor="#FFFFFF"
+          onValueChange={(value) => setCurrentTime(value)}
+          onSlidingComplete={(value) => {
+            videoRef.current.seek(value);
+          }}
+        />
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 10,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            justifyContent: "space-around",
+            alignItems: "center",
+            zIndex: 3,
+          }}
+        >
+          <TouchableOpacity onPress={handleSeekBack}>
+            <Icon
+              size={24}
+              name="banckward"
+              type="AntDesign"
+              color={Colors.White}
+            />
+          </TouchableOpacity>
+
+          {videoPaused ? (
+            <TouchableOpacity onPress={handlePlayPause}>
+              <Icon
+                size={24}
+                name="caretright"
+                type="AntDesign"
+                color={Colors.White}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handlePlayPause}>
+              <Icon
+                size={24}
+                name="pause"
+                type="AntDesign"
+                color={Colors.White}
+              />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity onPress={handleSeekForward}>
+            <Icon
+              size={22}
+              name="forward"
+              type="AntDesign"
+              color={Colors.White}
+            />
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  }, [controlsVisible, currentTime, videoDuration, videoPaused, Colors, handleSeekBack, handleSeekForward, handlePlayPause]);
+
+  // Memoized subscription days section
+  const subscriptionDaysSection = useMemo(() => {
+    if (taskData.loading) return null;
+
+    return (
+      <View
+        style={{
+          paddingVertical: Sizes.Padding,
+          backgroundColor: Colors.Primary2,
+          borderRadius: Sizes.Radius,
+          marginTop: Sizes.Padding,
+          marginHorizontal: Sizes.Padding,
+        }}
+      >
+        <Text
+          style={{
+            color: Colors.White,
+            ...Fonts.Bold2,
+            marginLeft: Sizes.Padding,
+          }}
+        >
+          Subscription Days
+        </Text>
+        <Days
+          startDay={day.startDay}
+          totalDays={day.totalDays}
+          currentDay={day.currentDay}
+          onPress={async (date: any) => {
+            console.log("\n\n..date...", date);
+            await updateTasksByDate(taskData.data);
+            setSelectedDate(date);
+          }}
+        />
+      </View>
+    );
+  }, [taskData.loading, day, Sizes, Colors, Fonts, taskData.data]);
+
+  // Memoized task item renderer
+  const renderTaskItem = useCallback(({ item, index }: { item: DAILY_TRACK_BOOK_TASK; index: number }) => {
+    const backgroundColor =
+      (item.STATUS == "0" || item.STATUS == "N") &&
+        moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
+        ? "#F1948A"
+        : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
+          ? "#D5DBDB"
+          : (item.STATUS != "0" || item.STATUS != "N") &&
+            moment(new Date()).format("HH:mm:ss") >
+            item.DISABLE_TIMING
+            ? "#D5F5E3"
+            : Colors.White;
+
+    const undoneButtonColor =
+      (item.STATUS == "0" || item.STATUS == "N") &&
+        moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
+        ? "#EC7063"
+        : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
+          ? "#ACACAC"
+          : moment(new Date()).format("HH:mm:ss") >
+            item.DISABLE_TIMING
+            ? item.STATUS == "U"
+              ? "#2ECC71"
+              : "#82E0AA"
+            : item.STATUS === "U"
+              ? Colors.Secondary
+              : Colors.Background;
+
+    const doneButtonColor =
+      (item.STATUS == "0" || item.STATUS == "N") &&
+        moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
+        ? "#EC7063"
+        : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
+          ? "#ACACAC"
+          : moment(new Date()).format("HH:mm:ss") >
+            item.DISABLE_TIMING
+            ? item.STATUS == "D"
+              ? "#2ECC71"
+              : "#82E0AA"
+            : item.STATUS === "D"
+              ? Colors.Secondary
+              : Colors.Background;
+
+    const undoneButtonTextColor =
+      (item.STATUS == "0" || item.STATUS == "N") &&
+        moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
+        ? Colors.PrimaryText
+        : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
+          ? Colors.PrimaryText
+          : moment(new Date()).format("HH:mm:ss") >
+            item.DISABLE_TIMING
+            ? item.STATUS == "U"
+              ? Colors.White
+              : "#196F3D"
+            : item.STATUS === "U"
+              ? Colors.Primary
+              : Colors.Primary;
+
+    const doneButtonTextColor =
+      (item.STATUS == "0" || item.STATUS == "N") &&
+        moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
+        ? Colors.PrimaryText
+        : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
+          ? Colors.PrimaryText
+          : moment(new Date()).format("HH:mm:ss") >
+            item.DISABLE_TIMING
+            ? item.STATUS == "D"
+              ? Colors.White
+              : "#196F3D"
+            : item.STATUS === "D"
+              ? Colors.Primary
+              : Colors.Primary;
+
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: backgroundColor,
+          elevation: 6,
+          shadowColor: Colors.Primary,
+          padding: Sizes.Radius,
+          paddingBottom: Sizes.Padding,
+          borderRadius: Sizes.Radius,
+          margin: 3,
+          marginBottom: Sizes.Radius,
+        }}
+      >
+        {/* Date */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: Sizes.Radius,
+          }}
+        >
+          <Text
+            style={{ ...Fonts.Medium3, color: Colors.PrimaryText1 }}
+          >
+            {moment(item.ASSIGNED_DATE).format("DD/MMM/YYYY")}
+          </Text>
+          <View style={{ flexDirection: "row" }}>
+            <Text
+              style={{
+                ...Fonts.Medium3,
+                color: Colors.PrimaryText1,
+              }}
+            >
+              {item.ENABLE_TIME == "00:00:00" &&
+                item.DISABLE_TIMING == "23:59:59"
+                ? "Full Day"
+                : item.ENABLE_TIME + "-" + item.DISABLE_TIMING}
+            </Text>
+          </View>
+        </View>
+        {/* Image and title */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <View style={{ flexDirection: "row", flex: 1 }}>
+            {item?.IMAGE_URL && (
+              <Image
+                source={{
+                  uri:
+                    BASE_URL +
+                    "static/taskImage/" +
+                    item?.IMAGE_URL,
+                }}
+                style={{
+                  height: 40,
+                  width: 40,
+                  borderRadius: 20,
+                }}
+              />
+            )}
+
+            <View style={{ marginLeft: Sizes.Radius, flex: 1 }}>
+              <Text
+                textBreakStrategy="highQuality"
+                style={{
+                  ...Fonts.Medium4,
+                  color: Colors.PrimaryText1,
+                  flex: 1,
+                }}
+              >
+                {item.LABEL}
+              </Text>
+              {item.DESCRIPTIONS && (
+                <Text
+                  textBreakStrategy="highQuality"
+                  style={{
+                    ...Fonts.Medium3,
+                    color: Colors.PrimaryText,
+                  }}
+                >
+                  {item.DESCRIPTIONS}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+        {/* buttons */}
+        {data.showSubmitButton &&
+          selectedDate == moment(new Date()).format("YYYY-MM-DD") ? (
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: Sizes.Padding,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <TouchableOpacity
+              activeOpacity={0.8}
+              disabled={
+                moment(new Date()).format("HH:mm:ss") >
+                  item.ENABLE_TIME &&
+                  moment(new Date()).format("HH:mm:ss") <
+                  item.DISABLE_TIMING
+                  ? false
+                  : true
+              }
+              onPress={() => {
+                handleSelectButton(item, "U");
+              }}
+              style={{
+                backgroundColor: undoneButtonColor,
+                padding: 5,
+                borderRadius: Sizes.ScreenPadding,
+                width: 100,
+                justifyContent: "center",
+                alignItems: "center",
+                elevation: 5,
+              }}
+            >
+              <Text
+                style={{
+                  color: undoneButtonTextColor,
+                  ...Fonts.Medium2,
+                }}
+              >
+                Undone
+              </Text>
+            </TouchableOpacity>
+            <View style={{ width: Sizes.Padding }} />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              disabled={
+                moment(new Date()).format("HH:mm:ss") >
+                  item.ENABLE_TIME &&
+                  moment(new Date()).format("HH:mm:ss") <
+                  item.DISABLE_TIMING
+                  ? false
+                  : true
+              }
+              onPress={() => {
+                handleSelectButton(item, "D");
+              }}
+              style={{
+                backgroundColor: doneButtonColor,
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 5,
+                borderRadius: Sizes.ScreenPadding,
+                width: 100,
+                elevation: 5,
+              }}
+            >
+              <Text
+                style={{
+                  color: doneButtonTextColor,
+                  ...Fonts.Medium2,
+                }}
+              >
+                Done
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View
+            style={{
+              backgroundColor:
+                item.STATUS == "N" || item.STATUS == "0"
+                  ? "#EC7063"
+                  : item.STATUS == "U"
+                    ? "#CCD1D1"
+                    : "#52BE80",
+              width: 150,
+              alignSelf: "flex-end",
+              justifyContent: "flex-end",
+              alignItems: "flex-end",
+              marginBottom: -Sizes.Padding,
+              marginRight: -Sizes.Radius,
+              borderBottomRightRadius: Sizes.Radius,
+              borderTopLeftRadius: Sizes.ScreenPadding,
+              padding: 3,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+              }}
+            >
+              <Icon
+                name={
+                  item.STATUS == "N" || item.STATUS == "0"
+                    ? "clock-alert-outline"
+                    : item.STATUS == "U"
+                      ? "close-circle-outline"
+                      : "check-circle-outline"
+                }
+                type="MaterialCommunityIcons"
+                size={14}
+                color={Colors.PrimaryText1}
+              />
+              <View style={{ width: Sizes.Base }} />
+              <Text
+                style={{
+                  ...Fonts.Medium3,
+                  color: Colors.PrimaryText1,
+                }}
+              >
+                {item.STATUS == "N" || item.STATUS == "0"
+                  ? "Not Performed"
+                  : item.STATUS == "U"
+                    ? "Not Completed"
+                    : "Completed"}
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  }, [data.showSubmitButton, selectedDate, Sizes, Colors, Fonts, handleSelectButton]);
+
   const exitSubscription = async () => {
     setLoading(true);
     try {
@@ -398,10 +881,9 @@ const GetTasks = ({ navigation, route }: Props) => {
         await AsyncStorage.removeItem("STAGE_NAME").catch(() => {
           AsyncStorage.setItem("STAGE_NAME", "");
         });
+        await deleteTasksByDate(selectedDate);
         setShowExitModal(false);
         dispatch(Reducers.setShowSplash(true));
-
-        // navigation.navigate("Dashboard");
       } else {
         console.warn("Exit failed", res.message || res);
       }
@@ -502,9 +984,6 @@ const GetTasks = ({ navigation, route }: Props) => {
             }}
           >
             <Video
-              // muted={true}
-              loading={videoLoad}
-              controls={false}
               ref={videoRef}
               source={
                 animationVideoData?.VIDEO_URL
@@ -541,136 +1020,20 @@ const GetTasks = ({ navigation, route }: Props) => {
                   isProgrammaticSeek.current = true;
                   videoRef.current.seek(animationVideoTime.startTime);
                   setVideoPaused(true);
-                  // Reset after seek completes
                   setTimeout(() => {
                     isProgrammaticSeek.current = false;
                   }, 0);
                 }
               }}
-              onProgress={(e: any) => {
-                setCurrentTime(e.currentTime);
-                // showControls();
-                if (
-                  !videoPaused &&
-                  e.currentTime > animationVideoTime.startTime
-                ) {
-                  isProgrammaticSeek.current = true;
-                  videoRef.current.seek(animationVideoTime.startTime);
-                  setVideoPaused(true);
-                  setTimeout(() => {
-                    isProgrammaticSeek.current = false;
-                  }, 0);
-                }
-              }}
-            // if (aniVideoButtonStatus) {
-            //   if (e.currentTime >= animationVideoTime.startTime) {
-            //     setVideoPaused(true);
-            //   }
-            // } else {
-            //   if (e.currentTime >= animationVideoTime.endTime) {
-            //     setVideoPaused(true);
-            //   }
-            // }
+              onProgress={handleProgress}
             />
 
-            {controlsVisible && (
-              <>
-                <Slider
-                  style={{
-                    width: '100%',
-                    position: 'absolute',
-                    bottom: 50,
-                    left: 0,
-                    right: 0,
-                    zIndex: 3,
-
-                  }}
-                  minimumValue={0}
-                  maximumValue={videoDuration}
-                  value={currentTime}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="#888888"
-                  thumbTintColor="#FFFFFF"
-                  onValueChange={(value) => setCurrentTime(value)}
-                  onSlidingComplete={(value) => {
-                    videoRef.current.seek(value);
-                  }}
-                />
-
-                <View
-                  style={{
-                    position: "absolute",
-                    bottom: 10,
-                    left: 0,
-                    right: 0,
-                    flexDirection: "row",
-                    justifyContent: "space-around",
-                    alignItems: "center",
-                    zIndex: 3,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={() => {
-                      const newTime = Math.max(currentTime - 10, 0);
-                      videoRef.current.seek(newTime);
-                      setCurrentTime(newTime);
-                    }}
-                  >
-                    <Icon
-                      size={24}
-                      name="banckward"
-                      type="AntDesign"
-                      color={Colors.White}
-                    />
-                  </TouchableOpacity>
-                  {videoPaused ? (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setVideoPaused(false);
-                        showControls();
-                      }}
-                    >
-                      <Icon
-                        size={24}
-                        name="caretright"
-                        type="AntDesign"
-                        color={Colors.White}
-                      />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity onPress={() => setVideoPaused(true)}>
-                      <Icon
-                        size={24}
-                        name="pause"
-                        type="AntDesign"
-                        color={Colors.White}
-                      />
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (!videoPaused) {
-                        videoRef.current.seek(currentTime + 10);
-                      }
-                    }}
-                  >
-                    <Icon
-                      size={22}
-                      name="forward"
-                      type="AntDesign"
-                      color={Colors.White}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </>
-
-            )}
+            {videoControls}
 
             {!videoLoad && unlockVideo.lock && (
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
-                  // updateVideoTimingData();
                   setUnlockVideo({ ...unlockVideo, showUnlockPopUp: true });
                 }}
                 style={{
@@ -739,37 +1102,7 @@ const GetTasks = ({ navigation, route }: Props) => {
       </TouchableWithoutFeedback>
 
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        {!taskData.loading && (
-          <View
-            style={{
-              paddingVertical: Sizes.Padding,
-              backgroundColor: Colors.Primary2,
-              borderRadius: Sizes.Radius,
-              marginTop: Sizes.Padding,
-              marginHorizontal: Sizes.Padding,
-            }}
-          >
-            <Text
-              style={{
-                color: Colors.White,
-                ...Fonts.Bold2,
-                marginLeft: Sizes.Padding,
-              }}
-            >
-              Subscription Days
-            </Text>
-            <Days
-              startDay={day.startDay}
-              totalDays={day.totalDays}
-              currentDay={day.currentDay}
-              onPress={async (date: any) => {
-                console.log("\n\n..date...", date);
-                await updateTasksByDate(taskData.data);
-                setSelectedDate(date);
-              }}
-            />
-          </View>
-        )}
+        {subscriptionDaysSection}
 
         <View style={{ flex: 1, margin: Sizes.Padding }}>
           {taskData.loading ? (
@@ -793,319 +1126,11 @@ const GetTasks = ({ navigation, route }: Props) => {
               data={sortedData}
               keyExtractor={(item, index) => index.toString()}
               showsVerticalScrollIndicator={false}
-              renderItem={({
-                item,
-                index,
-              }: {
-                item: DAILY_TRACK_BOOK_TASK;
-                index: number;
-              }) => {
-                const backgroundColor =
-                  (item.STATUS == "0" || item.STATUS == "N") &&
-                    moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
-                    ? "#F1948A"
-                    : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
-                      ? "#D5DBDB"
-                      : (item.STATUS != "0" || item.STATUS != "N") &&
-                        moment(new Date()).format("HH:mm:ss") >
-                        item.DISABLE_TIMING
-                        ? "#D5F5E3"
-                        : Colors.White;
-
-                const undoneButtonColor =
-                  (item.STATUS == "0" || item.STATUS == "N") &&
-                    moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
-                    ? "#EC7063"
-                    : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
-                      ? "#ACACAC"
-                      : moment(new Date()).format("HH:mm:ss") >
-                        item.DISABLE_TIMING
-                        ? item.STATUS == "U"
-                          ? "#2ECC71"
-                          : "#82E0AA"
-                        : item.STATUS === "U"
-                          ? Colors.Secondary
-                          : Colors.Background;
-
-                const doneButtonColor =
-                  (item.STATUS == "0" || item.STATUS == "N") &&
-                    moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
-                    ? "#EC7063"
-                    : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
-                      ? "#ACACAC"
-                      : moment(new Date()).format("HH:mm:ss") >
-                        item.DISABLE_TIMING
-                        ? item.STATUS == "D"
-                          ? "#2ECC71"
-                          : "#82E0AA"
-                        : item.STATUS === "D"
-                          ? Colors.Secondary
-                          : Colors.Background;
-
-                const undoneButtonTextColor =
-                  (item.STATUS == "0" || item.STATUS == "N") &&
-                    moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
-                    ? Colors.PrimaryText
-                    : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
-                      ? Colors.PrimaryText
-                      : moment(new Date()).format("HH:mm:ss") >
-                        item.DISABLE_TIMING
-                        ? item.STATUS == "U"
-                          ? Colors.White
-                          : "#196F3D"
-                        : item.STATUS === "U"
-                          ? Colors.Primary
-                          : Colors.Primary;
-
-                const doneButtonTextColor =
-                  (item.STATUS == "0" || item.STATUS == "N") &&
-                    moment(new Date()).format("HH:mm:ss") > item.DISABLE_TIMING
-                    ? Colors.PrimaryText
-                    : moment(new Date()).format("HH:mm:ss") < item.ENABLE_TIME
-                      ? Colors.PrimaryText
-                      : moment(new Date()).format("HH:mm:ss") >
-                        item.DISABLE_TIMING
-                        ? item.STATUS == "D"
-                          ? Colors.White
-                          : "#196F3D"
-                        : item.STATUS === "D"
-                          ? Colors.Primary
-                          : Colors.Primary;
-                return (
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: backgroundColor,
-                      elevation: 6,
-                      shadowColor: Colors.Primary,
-                      padding: Sizes.Radius,
-                      paddingBottom: Sizes.Padding,
-                      borderRadius: Sizes.Radius,
-                      margin: 3,
-                      marginBottom: Sizes.Radius,
-                    }}
-                  >
-                    {/* Date */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: Sizes.Radius,
-                      }}
-                    >
-                      <Text
-                        style={{ ...Fonts.Medium3, color: Colors.PrimaryText1 }}
-                      >
-                        {moment(item.ASSIGNED_DATE).format("DD/MMM/YYYY")}
-                      </Text>
-                      <View style={{ flexDirection: "row" }}>
-                        <Text
-                          style={{
-                            ...Fonts.Medium3,
-                            color: Colors.PrimaryText1,
-                          }}
-                        >
-                          {item.ENABLE_TIME == "00:00:00" &&
-                            item.DISABLE_TIMING == "23:59:59"
-                            ? "Full Day"
-                            : item.ENABLE_TIME + "-" + item.DISABLE_TIMING}
-                        </Text>
-                        {/* <Text
-                        style={{
-                          ...Fonts.Medium3,
-                          color: Colors.PrimaryText1,
-                        }}>
-                        {item.DISABLE_TIMING}
-                      </Text> */}
-                      </View>
-                    </View>
-                    {/* Image and title */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <View style={{ flexDirection: "row", flex: 1 }}>
-                        {item?.IMAGE_URL && (
-                          <Image
-                            source={{
-                              uri:
-                                BASE_URL +
-                                "static/taskImage/" +
-                                item?.IMAGE_URL,
-                            }}
-                            style={{
-                              height: 40,
-                              width: 40,
-                              borderRadius: 20,
-                            }}
-                          />
-                        )}
-
-                        <View style={{ marginLeft: Sizes.Radius, flex: 1 }}>
-                          <Text
-                            textBreakStrategy="highQuality"
-                            style={{
-                              ...Fonts.Medium4,
-                              color: Colors.PrimaryText1,
-                              flex: 1,
-                            }}
-                          >
-                            {item.LABEL}
-                          </Text>
-                          {item.DESCRIPTIONS && (
-                            <Text
-                              textBreakStrategy="highQuality"
-                              style={{
-                                ...Fonts.Medium3,
-                                color: Colors.PrimaryText,
-                              }}
-                            >
-                              {item.DESCRIPTIONS}
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                    </View>
-                    {/* buttons */}
-                    {data.showSubmitButton &&
-                      selectedDate == moment(new Date()).format("YYYY-MM-DD") ? (
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          marginTop: Sizes.Padding,
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          disabled={
-                            moment(new Date()).format("HH:mm:ss") >
-                              item.ENABLE_TIME &&
-                              moment(new Date()).format("HH:mm:ss") <
-                              item.DISABLE_TIMING
-                              ? false
-                              : true
-                          }
-                          onPress={() => {
-                            handleSelectButton(item, "U");
-                          }}
-                          style={{
-                            backgroundColor: undoneButtonColor,
-                            padding: 5,
-                            borderRadius: Sizes.ScreenPadding,
-                            width: 100,
-                            justifyContent: "center",
-                            alignItems: "center",
-                            elevation: 5,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: undoneButtonTextColor,
-                              ...Fonts.Medium2,
-                            }}
-                          >
-                            Undone
-                          </Text>
-                        </TouchableOpacity>
-                        <View style={{ width: Sizes.Padding }} />
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          disabled={
-                            moment(new Date()).format("HH:mm:ss") >
-                              item.ENABLE_TIME &&
-                              moment(new Date()).format("HH:mm:ss") <
-                              item.DISABLE_TIMING
-                              ? false
-                              : true
-                          }
-                          onPress={() => {
-                            handleSelectButton(item, "D");
-                          }}
-                          style={{
-                            backgroundColor: doneButtonColor,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: 5,
-                            borderRadius: Sizes.ScreenPadding,
-                            width: 100,
-                            elevation: 5,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: doneButtonTextColor,
-                              ...Fonts.Medium2,
-                            }}
-                          >
-                            Done
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <View
-                        style={{
-                          backgroundColor:
-                            item.STATUS == "N" || item.STATUS == "0"
-                              ? "#EC7063"
-                              : item.STATUS == "U"
-                                ? "#CCD1D1"
-                                : "#52BE80",
-                          width: 150,
-                          alignSelf: "flex-end",
-                          justifyContent: "flex-end",
-                          alignItems: "flex-end",
-                          marginBottom: -Sizes.Padding,
-                          marginRight: -Sizes.Radius,
-                          borderBottomRightRadius: Sizes.Radius,
-                          borderTopLeftRadius: Sizes.ScreenPadding,
-                          padding: 3,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: "100%",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexDirection: "row",
-                          }}
-                        >
-                          <Icon
-                            name={
-                              item.STATUS == "N" || item.STATUS == "0"
-                                ? "clock-alert-outline"
-                                : item.STATUS == "U"
-                                  ? "close-circle-outline"
-                                  : "check-circle-outline"
-                            }
-                            type="MaterialCommunityIcons"
-                            size={14}
-                            color={Colors.PrimaryText1}
-                          />
-                          <View style={{ width: Sizes.Base }} />
-                          <Text
-                            style={{
-                              ...Fonts.Medium3,
-                              color: Colors.PrimaryText1,
-                            }}
-                          >
-                            {item.STATUS == "N" || item.STATUS == "0"
-                              ? "Not Performed"
-                              : item.STATUS == "U"
-                                ? "Not Completed"
-                                : "Completed"}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                );
-              }}
+              renderItem={renderTaskItem}
+              removeClippedSubviews={true}
+              initialNumToRender={10}
+              maxToRenderPerBatch={5}
+              windowSize={5}
             />
           )}
         </View>
@@ -1166,14 +1191,6 @@ const GetTasks = ({ navigation, route }: Props) => {
                 may loose that reward
               </Text>
               <View style={{ flexDirection: "row", marginTop: Sizes.Padding }}>
-                {/* <TextButton
-                  isBorder
-                  style={{flex: 1, borderColor: Colors.Secondary}}
-                  label="Skip the reward"
-                  loading={false}
-                  onPress={() => completeTask()}
-                /> */}
-                {/* <View style={{width: 16}} /> */}
                 <TextButton
                   style={{ flex: 1 }}
                   label="Unlock the Video"

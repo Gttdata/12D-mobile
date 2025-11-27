@@ -1,14 +1,14 @@
-import {View, Text, Image, TouchableOpacity, BackHandler} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {Icon, Modal} from '../Components';
-import {Reducers, useDispatch, useSelector} from '../Modules';
-import {logo} from '../../assets';
+import { View, Text, Image, TouchableOpacity, BackHandler } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Icon, Modal } from '../Components';
+import { Reducers, useDispatch, useSelector } from '../Modules';
+import { logo } from '../../assets';
 
 interface AppInfoProps {
   onClose: () => void;
 }
-const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
+const AppInfoScreens: React.FC<AppInfoProps> = ({ onClose }) => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
   const [activeIndex, setActiveIndex] = useState(1);
   const dispatch = useDispatch();
 
@@ -43,7 +43,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       </Text>
       {/* Welcome */}
       {activeIndex == 1 && (
-        <View style={{flex: 1, marginTop: Sizes.header}}>
+        <View style={{ flex: 1, marginTop: Sizes.header }}>
           {/* <Text
           style={{
             ...Fonts.Medium4,
@@ -92,7 +92,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* school erp */}
       {activeIndex == 2 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -137,7 +137,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* task book */}
       {activeIndex == 3 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -172,7 +172,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* health and fitness */}
       {activeIndex == 4 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -206,7 +206,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* digital detox */}
       {activeIndex == 5 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -239,7 +239,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* daily organizer */}
       {activeIndex == 6 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -272,7 +272,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
       )}
       {/* weekly planner */}
       {activeIndex == 7 && (
-        <View style={{flex: 1, marginTop: Sizes.header * 2}}>
+        <View style={{ flex: 1, marginTop: Sizes.header * 2 }}>
           <Text
             style={{
               ...Fonts.Bold1,
@@ -305,14 +305,14 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
           </Text>
         </View>
       )}
-      <View style={{flexDirection: 'row'}}>
-        <View style={{flexDirection: 'row', flex: 1}}>
+      <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: 'row', flex: 1 }}>
           {activeIndex != 1 && (
             <Text
               onPress={() => {
                 setActiveIndex(activeIndex - 1);
               }}
-              style={{...Fonts.Medium2, color: Colors.Primary}}>
+              style={{ ...Fonts.Medium2, color: Colors.Primary }}>
               Previous
             </Text>
           )}
@@ -340,7 +340,7 @@ const AppInfoScreens: React.FC<AppInfoProps> = ({onClose}) => {
             <Icon
               name="long-arrow-alt-right"
               type="FontAwesome5"
-              style={{paddingTop: 2, paddingLeft: 5}}
+              style={{ paddingTop: 2, paddingLeft: 5 }}
             />
           )}
         </TouchableOpacity>

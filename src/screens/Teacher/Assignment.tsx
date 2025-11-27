@@ -96,7 +96,10 @@ const Assignment = ({ navigation }: Props): JSX.Element => {
         filterClassData: calls[1].data,
         loading: false,
       });
-    } else {
+    } else if (calls[0].code == 400 && calls[1].code == 400) {
+      Toast('Something Wrong...Please try again');
+    }
+    else {
       Toast('Something Wrong...Please try again');
       setTaskData({ ...taskData, loading: false });
     }

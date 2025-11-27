@@ -7,19 +7,19 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import React, {useEffect, useMemo, useState} from 'react';
-import {Reducers, apiPost, useDispatch, useSelector} from '../../Modules';
-import {Header, Icon, TextButton, TextInput, Toast} from '../../Components';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Reducers, apiPost, useDispatch, useSelector } from '../../Modules';
+import { Header, Icon, TextButton, TextInput, Toast } from '../../Components';
 import {
   TRACK_BOOK_QUESTION_INTERFACE,
   TRACK_BOOK_QUESTION_OPTION_INTERFACE,
 } from '../../Modules/interface';
-import {StackProps} from '../../routes';
+import { StackProps } from '../../routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {noData} from '../../../assets';
+import { noData } from '../../../assets';
 // @ts-ignore
 import StarRating from 'react-native-star-rating';
-import {Checkbox, RadioButton} from 'react-native-paper';
+import { Checkbox, RadioButton } from 'react-native-paper';
 import Animated, {
   interpolate,
   SharedValue,
@@ -29,9 +29,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 type Props = StackProps<'DimensionQuestions'>;
-const DimensionQuestions = ({navigation, route}: Props) => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {itemData, call, headID} = route.params;
+const DimensionQuestions = ({ navigation, route }: Props) => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { itemData, call, headID } = route.params;
   const [question, setQuestion] = useState<TRACK_BOOK_QUESTION_INTERFACE[]>([]);
   const [questionOption, setQuestionOption] = useState<
     TRACK_BOOK_QUESTION_INTERFACE[]
@@ -42,7 +42,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
   const [search, setSearch] = useState<string>('');
   const searchHeight = useSharedValue(0);
 
-  const {selectedDimensionOptionData, selectedDimensionYesOptions} =
+  const { selectedDimensionOptionData, selectedDimensionYesOptions } =
     useSelector(state => state.dimensionQuestion);
   const dispatch = useDispatch();
   const [mainText, bracketText] = itemData.NAME.split('(');
@@ -50,20 +50,19 @@ const DimensionQuestions = ({navigation, route}: Props) => {
     getQuestions();
   }, []);
   const getQuestions = async () => {
-    
+
     const ageGroup = await AsyncStorage.getItem('AgeGroup');
-    
-    
+
+
     try {
       const res = await apiPost('api/questionary/get', {
-        filter: ` AND STATUS = 1 AND IS_COMMON = 0 AND QUESTION_HEAD_ID = ${
-          headID.ID ? headID.ID : 0
-        } AND DIAMENTION_ID = ${itemData.ID} AND AGE_GROUP = ${ageGroup} `,
+        filter: ` AND STATUS = 1 AND IS_COMMON = 0 AND QUESTION_HEAD_ID = ${headID.ID ? headID.ID : 0
+          } AND DIAMENTION_ID = ${itemData.ID} AND AGE_GROUP = ${ageGroup} `,
         sortValue: 'ASC',
         sortKey: 'SEQ_NO',
       });
-      console.log("AGE GROUP",res.data);
-      
+      // console.log("AGE GROUP",res.data);
+
       if (res && res.code == 200) {
         if (res.data.length > 0) {
           setQuestion(res.data);
@@ -92,13 +91,13 @@ const DimensionQuestions = ({navigation, route}: Props) => {
       const res = await apiPost('api/questionaryOptions/get', {
         filter: ` AND QUESTION_ID = ${item.ID} AND STATUS = 1 `,
       });
-      console.log("QUESTIONARY GET",res.data);
-      
+      console.log("QUESTIONARY GET", res.data);
+
       if (res && res.code == 200) {
         // console.log('\n\n\n\n...option res......', res);
         setQuestionOption((prevData: any) => [
           ...prevData,
-          {[ID_KEY]: res.data},
+          { [ID_KEY]: res.data },
         ]);
         // setOption(true);
       } else {
@@ -135,14 +134,14 @@ const DimensionQuestions = ({navigation, route}: Props) => {
           dispatch(Reducers.setSelectedDimensionNoOptions(res.data));
         }
       }
-    } catch (error) {}
+    } catch (error) { }
   };
   const handleYesOptionSelect = (
     question: TRACK_BOOK_QUESTION_OPTION_INTERFACE,
     optionKey: string,
   ) => {
     dispatch(
-      Reducers.setSelectedDimensionYesOptions({item: question, optionKey}),
+      Reducers.setSelectedDimensionYesOptions({ item: question, optionKey }),
     );
   };
   const handleStarRatingSelect = (rate: number, questionId: number) => {
@@ -196,7 +195,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
     };
   });
   return (
-    <View style={{flex: 1, backgroundColor: '#E4F3FF'}}>
+    <View style={{ flex: 1, backgroundColor: '#E4F3FF' }}>
       <Header
         label={`${mainText}Questionnaire`}
         onBack={() => {
@@ -213,7 +212,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                   duration: 500,
                 });
               } else {
-                searchHeight.value = withTiming(0, {duration: 500});
+                searchHeight.value = withTiming(0, { duration: 500 });
               }
             }}
           />
@@ -255,7 +254,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                       <Icon
                         name="close"
                         type="AntDesign"
-                        style={{marginRight: Sizes.Padding}}
+                        style={{ marginRight: Sizes.Padding }}
                         onPress={() => setSearch(``)}
                       />
                     ) : null
@@ -266,7 +265,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
               <FlatList
                 data={search ? renderedQuestions : question}
                 ItemSeparatorComponent={() => (
-                  <View style={{height: Sizes.Base}} />
+                  <View style={{ height: Sizes.Base }} />
                 )}
                 keyExtractor={(item, index) => index.toString()}
                 showsVerticalScrollIndicator={false}
@@ -299,7 +298,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                         }}>
                         <TouchableOpacity
                           activeOpacity={0.8}
-                          onPress={() => {}}
+                          onPress={() => { }}
                           style={{
                             flex: 1,
                             shadowColor: Colors.Primary,
@@ -340,7 +339,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                       flexDirection: 'row',
                                       alignItems: 'center',
                                     }}>
-                                    <View style={{flex: 1}}>
+                                    <View style={{ flex: 1 }}>
                                       <StarRating
                                         starSize={28}
                                         emptyStarColor={'#f6c324'}
@@ -368,14 +367,14 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                         selectedDimensionOptionData.some(
                                           it =>
                                             it.QUESTION_ID ===
-                                              ite.QUESTION_ID &&
+                                            ite.QUESTION_ID &&
                                             it.ID === ite.ID,
                                         );
                                       const count =
                                         selectedDimensionOptionData.some(
                                           it =>
                                             it.QUESTION_ID ===
-                                              ite.QUESTION_ID &&
+                                            ite.QUESTION_ID &&
                                             it.ID === ite.ID,
                                         );
 
@@ -408,7 +407,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                             {ite.QUESTION_TYPE == 1 ? (
                                               <View
                                                 style={{
-                                                  transform: [{scale: 0.8}],
+                                                  transform: [{ scale: 0.8 }],
                                                   marginVertical: -Sizes.Radius,
                                                 }}>
                                                 <RadioButton
@@ -434,7 +433,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                             ) : (
                                               <View
                                                 style={{
-                                                  transform: [{scale: 0.8}],
+                                                  transform: [{ scale: 0.8 }],
                                                   marginVertical: -Sizes.Radius,
                                                 }}>
                                                 <Checkbox
@@ -510,7 +509,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                 No
                               </Text>
                             </TouchableOpacity>
-                            <View style={{width: Sizes.Radius}} />
+                            <View style={{ width: Sizes.Radius }} />
                             <TouchableOpacity
                               activeOpacity={0.8}
                               onPress={() => {
@@ -522,15 +521,15 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                                 );
                                 item.IS_CHILD_AVAILABLE == 1
                                   ? navigation.push('DimensionQuestions', {
-                                      itemData,
-                                      call: 'Q',
-                                      headID: item,
-                                    })
+                                    itemData,
+                                    call: 'Q',
+                                    headID: item,
+                                  })
                                   : navigation.push('DimensionQuestions', {
-                                      itemData,
-                                      call: 'O',
-                                      headID: item,
-                                    });
+                                    itemData,
+                                    call: 'O',
+                                    headID: item,
+                                  });
                               }}
                               style={{
                                 backgroundColor:
@@ -584,7 +583,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
               />
             </View>
             {!headID.ID && (
-              <View style={{flexDirection: 'row'}}>
+              <View style={{ flexDirection: 'row' }}>
                 {/* <TextButton
                   isBorder
                   label="Select From another"
@@ -594,14 +593,14 @@ const DimensionQuestions = ({navigation, route}: Props) => {
                   }}
                   style={{marginBottom: Sizes.Padding, flex: 1}}
                 /> */}
-                <View style={{width: Sizes.Radius}} />
+                <View style={{ width: Sizes.Radius }} />
                 <TextButton
                   label="Done"
                   loading={false}
                   onPress={() => {
                     saveAllData();
                   }}
-                  style={{marginBottom: Sizes.Padding, flex: 1}}
+                  style={{ marginBottom: Sizes.Padding, flex: 1 }}
                 />
               </View>
             )}
@@ -612,7 +611,7 @@ const DimensionQuestions = ({navigation, route}: Props) => {
   );
 };
 const styles = StyleSheet.create({
-  container: {padding: 16},
+  container: { padding: 16 },
   dropdown: {
     height: 50,
     backgroundColor: 'transparent',

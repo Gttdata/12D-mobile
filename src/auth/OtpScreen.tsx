@@ -1,25 +1,25 @@
-import {View, Text, Image} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { View, Text, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import Icon from '../Components/Icon';
 import OTPInputView from '@twotalltotems/react-native-otp-input';
-import {Reducers, apiPost, apiPut, useDispatch, useSelector} from '../Modules';
-import {Modal, TextButton, Toast} from '../Components';
-import {StackAuthProps} from './AuthRoutes';
+import { Reducers, apiPost, apiPut, useDispatch, useSelector } from '../Modules';
+import { Modal, TextButton, Toast } from '../Components';
+import { StackAuthProps } from './AuthRoutes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
-import {erp, logo, trackk_logo} from '../../assets';
+import { erp, logo, trackk_logo } from '../../assets';
 import messaging from '@react-native-firebase/messaging';
-import Animated, {FadeInDown, FadeInUp} from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import AppInfoScreens from '../screens/AppInfoScreens';
 
 const IMAGE_WIDTH = 180;
 
 type Props = StackAuthProps<'OtpScreen'>;
-const OtpScreen = ({navigation, route}: Props): JSX.Element => {
-  const {Sizes, Colors, Fonts} = useSelector(state => state.app);
-  const {t} = useTranslation();
-  const {mobile} = route.params;
+const OtpScreen = ({ navigation, route }: Props): JSX.Element => {
+  const { Sizes, Colors, Fonts } = useSelector(state => state.app);
+  const { t } = useTranslation();
+  const { mobile } = route.params;
   const dispatch = useDispatch();
   const [otp, setOtp] = useState({
     otp: '',
@@ -48,32 +48,32 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
     }
   };
   const verifyOtp = async (value: any) => {
-    setOtp(prev => ({...prev, loading: true}));
+    setOtp(prev => ({ ...prev, loading: true }));
 
     const CLOUD_ID = await messaging().getToken();
 
-    
-  if (!checkValidation(value)) {
-    setOtp(prev => ({...prev, loading: false}));
-    return;
-  }
+
+    if (!checkValidation(value)) {
+      setOtp(prev => ({ ...prev, loading: false }));
+      return;
+    }
     try {
-      setOtp(prev => ({...prev, loading: true}));
+      setOtp(prev => ({ ...prev, loading: true }));
       const res = await apiPost('appUser/verifyLoginOTP', {
         MOBILE_NO: mobile,
         OTP: value,
         CLOUD_ID,
       });
       if (res && res.code == 200) {
-        setOtp({...otp, loading: false});
-        // console.log('...........0000 res.....', res.data);
+        setOtp({ ...otp, loading: false });
+        console.log('...........0000 res.....', res.data);
         if (res.data[0].IS_NEW_USER == 0) {
           const user = res.data[1].UserData;
           const token: string = res.data[1].token;
           await AsyncStorage.setItem('USER_ID', '' + user.ID);
           await AsyncStorage.setItem('token', '' + token);
           await AsyncStorage.setItem('MOBILE_NUMBER', '' + mobile);
-          setOtp({...otp, loading: false});
+          setOtp({ ...otp, loading: false });
           // dispatch(Reducers.setShowSplash(true));
           setShowAppInfoData(true);
         }
@@ -82,7 +82,7 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
           const token: string = res.data[1].token;
           const item = res.data[1].UserData[0];
           await AsyncStorage.setItem('token', '' + token);
-          setOtp({...otp, loading: false});
+          setOtp({ ...otp, loading: false });
 
           navigation.navigate('AppRegistrationScreen', {
             item,
@@ -100,11 +100,11 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
           });
         }
       } else if (res && res.code == 300) {
-        setOtp({...otp, loading: false});
+        setOtp({ ...otp, loading: false });
         Toast(res.message);
       }
     } catch (error) {
-      setOtp({...otp, loading: false});
+      setOtp({ ...otp, loading: false });
       console.log('error..', error);
     }
   };
@@ -117,7 +117,7 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
       if (res && res.code == 200) {
       } else {
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   return (
@@ -156,7 +156,7 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
               }}
               source={logo}
             />
-            <Text style={{color: Colors.White, ...Fonts.Bold2}}>
+            <Text style={{ color: Colors.White, ...Fonts.Bold2 }}>
               12 Dimensions : Productivity App
             </Text>
             <Text
@@ -185,22 +185,22 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
           padding: Sizes.ScreenPadding,
           borderRadius: Sizes.ScreenPadding,
         }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Text style={{color: Colors.PrimaryText, ...Fonts.Bold2}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ color: Colors.PrimaryText, ...Fonts.Bold2 }}>
             {mobile}
           </Text>
           <Icon
             name="edit"
             type="AntDesign"
             size={16}
-            style={{marginLeft: Sizes.Radius}}
+            style={{ marginLeft: Sizes.Radius }}
             onPress={() => navigation.navigate('Login')}
           />
         </View>
         <OTPInputView
           editable={!otp.loading}
           keyboardType="number-pad"
-          style={{height: 50}}
+          style={{ height: 50 }}
           pinCount={6}
           autofillFromClipboard={true}
           autoFocusOnLoad
@@ -213,16 +213,16 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
             ...Fonts.Medium2,
             borderBottomWidth: 1,
           }}
-          codeInputHighlightStyle={{borderColor: Colors.Primary}}
+          codeInputHighlightStyle={{ borderColor: Colors.Primary }}
           onCodeFilled={value => {
             // setOtp({...otp, otp: value, loading: true});
             // verifyOtp(value);
 
-            setOtp(prev => ({...prev, otp: value}));
+            setOtp(prev => ({ ...prev, otp: value }));
             verifyOtp(value);
           }}
           onCodeChanged={value => {
-            setOtp({...otp, otp: value});
+            setOtp({ ...otp, otp: value });
           }}
         />
         <View>
@@ -232,7 +232,7 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
             }}
             loading={otp.loading}
             label={t('otpScreen.Verify')}
-            style={{marginTop: Sizes.ScreenPadding}}
+            style={{ marginTop: Sizes.ScreenPadding }}
           />
         </View>
 
@@ -247,7 +247,7 @@ const OtpScreen = ({navigation, route}: Props): JSX.Element => {
             justifyContent: 'flex-end',
           }}
           onPress={() => {
-            setOtp({...otp, otp: ''});
+            setOtp({ ...otp, otp: '' });
             setTimer(30);
             onReSendOtp();
           }}>

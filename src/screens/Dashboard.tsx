@@ -124,7 +124,7 @@ const Dashboard = ({ navigation }: Props): JSX.Element => {
 
 
     const data = await AsyncStorage.getItem("SUBSCRIPTION_DETAILS");
-    console.log("data******", data);
+    console.log("data******2", data);
     if (active && !data) {
       Toast("Please activate plan");
       setActivatePlanModal(true);
