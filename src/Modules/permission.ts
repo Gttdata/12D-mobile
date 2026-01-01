@@ -19,10 +19,10 @@ const location = {
   ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
   android: PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
 };
-const readImages = {
-  ios: null,
-  android: PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
-};
+// const readImages = {
+//   ios: null,
+//   android: PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+// };
 const readExternal = {
   ios: null,
   android: PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
@@ -31,14 +31,10 @@ const location1 = {
   ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
   android: PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION,
 };
-const readVideo = {
-  ios: null,
-  android: PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
-};
-const readAudio = {
-  ios: null,
-  android: PERMISSIONS.ANDROID.READ_MEDIA_AUDIO,
-};
+// const readAudio = {
+//   ios: null,
+//   android: PERMISSIONS.ANDROID.READ_MEDIA_AUDIO,
+// };
 
 const notification = {
   ios: null,
@@ -47,21 +43,21 @@ const notification = {
 
 const AllPermission = {
   // camera,
-  // image,
+  image,
   location,
   location1,
-  readImages,
-  // readExternal,
+  // readImages,
+  readExternal,
   notification,
  
 };
 
 type RequestPermissions =
   // | 'camera'
-  // | 'image'
+  | 'image'
   | 'location'
-  | 'readImages'
-  // | 'readExternal'
+  // | 'readImages'
+  | 'readExternal'
   | 'location1'
   | 'notification'
  

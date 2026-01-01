@@ -2,35 +2,37 @@
  * @format
  */
 
-import {AppRegistry, Alert, NativeModules} from 'react-native';
+import { AppRegistry } from 'react-native';
 import App from './App';
-import {name as appName} from './app.json';
-import {Provider} from 'react-redux';
-import {store} from './src/Modules';
+import { name as appName } from './app.json';
+import { Provider } from 'react-redux';
+import { store } from './src/Modules';
 import './src/i18n/i18n.config';
 import messaging from '@react-native-firebase/messaging';
-import {Notification} from './src/Modules/notifications';
-// const {BackgroundServiceCheck, CheckUsedApp, BatteryRestrictions, DeviceAdmin} =
-//   NativeModules;
+import { Notification } from './src/Modules/notifications';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 const Application = () => {
   messaging().setBackgroundMessageHandler(async remoteMessage => {
-    console.log('Message handled in the background!', remoteMessage);
-    // BackgroundServiceCheck.startBackgroundReminder(['data1', 'data2'])
-    //   .then(result => {
-    //     console.log(result); // Success message from the native module
-    //   })
-    //   .catch(error => {
-    //     console.error(error); // Error message from the native module
-    //   });
-    Notification(remoteMessage);
+    // console.log('Message handled in the background!', remoteMessage);
+    const { notificationType, data1 } = remoteMessage?.data || {};
+    // console.log('Background notification data:', notificationType, data1);
+    const type = notificationType || data1;
+    if (type === 'A' || type === 'DPT') {
+      await Notification(remoteMessage, true);
+    }
   });
   messaging().getInitialNotification(async remoteMessage => {
-    console.log('Message handled in the background!', remoteMessage);
-    Notification(remoteMessage);
+    console.log('Initial notification from quit state:', remoteMessage);
+    if (remoteMessage) {
+      await Notification(remoteMessage);
+    }
   });
   return (
     <Provider store={store}>
-      <App />
+      <SafeAreaView style={{ flex: 1 }}>
+        <App />
+      </SafeAreaView>
     </Provider>
   );
 };

@@ -6,12 +6,11 @@ import notifee, {
   EventType,
 } from '@notifee/react-native';
 import { NativeModules, PermissionsAndroid, Platform } from 'react-native';
+import { startAlarm, stopAlarm } from './AlarmNativeModule';
 import { Toast } from '../Components';
 import { apiPost, apiPut } from './service';
 import moment from 'moment';
 import { PERIOD_TRACKING_RECORD } from './interface';
-
-// const { AlarmModule } = NativeModules;
 
 let notificationData = {};
 export const setNotificationData = (data: any) => {
@@ -87,6 +86,7 @@ notifee.onForegroundEvent(async ({ type, detail }: any) => {
 });
 
 const handleSnoozeAction = async () => {
+  stopAlarm();
   await notifee.cancelAllNotifications();
 
   const data: any = getNotificationData();
@@ -105,7 +105,7 @@ const handleSnoozeAction = async () => {
 };
 
 const handleDoneAction = async () => {
-
+  stopAlarm();
   await notifee.cancelAllNotifications();
 
   const data: any = getNotificationData();
@@ -190,27 +190,66 @@ const createNewPeriodTrackingRecord = async (item: PERIOD_TRACKING_RECORD) => {
   }
 };
 
-export const Notification = async (notification: FirebaseMessagingTypes.RemoteMessage) => {
+export const Notification = async (
+  notification: FirebaseMessagingTypes.RemoteMessage,
+  isBackground: boolean = false,
+) => {
   try {
-    const { title, body }: any = notification.notification;
-    const { data1, data2, data3, data4, data5 }: any = notification.data;
-    setNotificationData({ data1, data2, data3, data4, data5 });
+    const title = notification.data?.title || notification.notification?.title;
+    const body = notification.data?.body || notification.notification?.body;
 
-    await notifee.deleteChannel('default');
+    const { data1, data2, data3, data4, data5, notificationType }: any = notification.data || {};
+    setNotificationData({ data1, data2, data3, data4, data5, notificationType });
 
-    const channelId = await notifee.createChannel({
-      id: 'custom',
-      name: 'Default Channel',
+    const type = notificationType || data1;
+    console.log("Notification Type: ", type);
+
+    await notifee.deleteChannel('alarm_channel');
+    await notifee.deleteChannel('dpt_channel');
+    await notifee.deleteChannel('default_channel');
+    await notifee.deleteChannel('silent_channel');
+
+    let channelId: string;
+    let soundName: string | undefined;
+
+    if (type === 'A') {
+      channelId = 'alarm_channel';
+      soundName = undefined;
+    } else if (type === 'DPT') {
+      channelId = 'dpt_channel';
+      soundName = 'ticktac';
+    } else if (type === 'P') {
+      channelId = 'default_channel';
+      soundName = undefined;
+    } else {
+      channelId = 'silent_channel';
+      soundName = undefined;
+    }
+
+    const channelConfig: any = {
+      id: channelId,
+      name:
+        type === 'A'
+          ? 'Alarm Notifications'
+          : type === 'DPT'
+            ? 'Period Tracking'
+            : type === 'P'
+              ? 'Default Notifications'
+              : 'Silent',
       importance: AndroidImportance.HIGH,
-      sound: data1 === 'A' ? 'alarm_sound' : data1 === 'DPT' ? 'ticktac' : 'blank',
       visibility: AndroidVisibility.PUBLIC,
       vibration: true,
       vibrationPattern: [500, 500, 500, 500],
-      lights: true,
-      lightColor: '#FF0000',
-      bypassDnd: true
-    });
+      bypassDnd: true,
+    };
 
+    if (soundName) {
+      channelConfig.sound = soundName;
+    }
+
+    await notifee.createChannel(channelConfig);
+
+    // Actions
     const rawActions = notification.data?.notificationActions
       ? JSON.parse(notification.data.notificationActions)
       : [];
@@ -218,35 +257,41 @@ export const Notification = async (notification: FirebaseMessagingTypes.RemoteMe
     const mappedActions = rawActions.map((action: any) => ({
       title: action.title,
       pressAction: {
-        id: action.id === 'stop' ? 'done' : action.id, 
+        id: action.id === 'stop' ? 'done' : action.id,
       },
     }));
+
+    if (type === 'A' && isBackground) {
+      try {
+        startAlarm();
+      } catch (e) {
+        console.error('Error starting native alarm:', e);
+      }
+    }
 
     await notifee.displayNotification({
       title,
       body,
-      data: notification.data, // Make sure to include all data
+      data: notification.data,
       android: {
         channelId,
-        sound: data1 === 'A' ? 'alarm_sound' : data1 === 'DPT' ? 'ticktac' : 'blank',
         smallIcon: 'ic_launcher',
         importance: AndroidImportance.HIGH,
         visibility: AndroidVisibility.PUBLIC,
         pressAction: { id: 'default' },
         showTimestamp: true,
         timestamp: Date.now(),
-        ...(data1 === 'A' && {
+        ...(type === 'A' && {
           ongoing: true,
           fullScreenAction: { id: 'default' },
-          timeoutAfter: 60000,
-          loopSound: true,
-          vibrationPattern:[200,500]
+          vibrationPattern: [200, 500],
+          autoCancel: false,
         }),
         actions: mappedActions,
       },
     });
 
   } catch (err) {
-    console.warn(err);
+    console.error('Notification Error:', err);
   }
 };

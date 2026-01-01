@@ -247,7 +247,7 @@ const Profile = ({ navigation }: any) => {
     requestMultiple([
       PERMISSIONS.ANDROID.CAMERA,
       PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-      PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+      // PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
     ]).then(result => {
       if (RESULTS.GRANTED) {
         try {
@@ -339,6 +339,7 @@ const Profile = ({ navigation }: any) => {
         PROFILE_PHOTO: input.PROFILE_PHOTO.NAME,
         ID: member?.ID,
         CLIENT_ID: 1,
+        STATUS: 1
       };
       const res = await apiPut('api/appUser/update', body);
       if (res && res.code == 200) {
@@ -851,6 +852,7 @@ const Profile = ({ navigation }: any) => {
               is24Hour={true}
               display="default"
               onChange={changeSelectedDate}
+              maximumDate={Date.now()}
             />
           )}
         </View>

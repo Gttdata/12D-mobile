@@ -100,6 +100,7 @@
     "@types/react": "^18.2.6",
     "@types/react-native-razorpay": "^2.2.6",
     "@types/react-native-sqlite-storage": "^6.0.5",
+    "@types/react-native-star-rating": "^1.1.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
     "eslint": "^8.19.0",

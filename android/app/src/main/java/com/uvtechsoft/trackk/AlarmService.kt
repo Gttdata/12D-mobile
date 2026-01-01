@@ -15,7 +15,7 @@ import androidx.core.app.NotificationCompat
 
 class AlarmService : Service() {
   private var mp: MediaPlayer? = null
-  private val CHANNEL_ID = "alarm_channel"
+  private val CHANNEL_ID = "custom"
   private val NOTIFICATION_ID = 1234
   private var wakeLock: PowerManager.WakeLock? = null
 

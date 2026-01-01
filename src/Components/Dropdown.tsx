@@ -1,5 +1,5 @@
-import React, { ReactNode, useState, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, ViewStyle, TextStyle } from 'react-native';
+import React, { ReactNode, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { View, Text, ViewStyle, TextStyle, Keyboard, Platform } from 'react-native';
 import { Dropdown as DropDown } from 'react-native-element-dropdown';
 import { useSelector } from '../Modules';
 
@@ -50,6 +50,30 @@ const Dropdown = forwardRef<any, DropdownProps>(({
 }, ref) => {
   const { Colors, Fonts, Sizes } = useSelector(state => state.app);
   const [isFocused, setIsFocused] = useState(false);
+  const [isDropdownTop, setIsDropdownTop] = useState(false);
+
+  useEffect(() => {
+    const keyboardShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        if (isFocused) {
+          setIsDropdownTop(true);
+        }
+      }
+    );
+
+    const keyboardHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsDropdownTop(false);
+      }
+    );
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [isFocused]);
 
   // Expose focus methods via ref if needed
   useImperativeHandle(ref, () => ({
@@ -104,11 +128,11 @@ const Dropdown = forwardRef<any, DropdownProps>(({
         ]}>
         {leftChild ? leftChild : null}
         <DropDown
-          dropdownPosition='bottom'
+          dropdownPosition='auto'
           data={data}
           value={value}
           disable={disable}
-          keyboardAvoiding={false}
+          keyboardAvoiding={true} // changed false to true
           iconStyle={{ height: 25, width: 27, ...iconStyle }}
           labelField={labelField ? labelField : 'label'}
           valueField={valueField ? valueField : 'value'}
@@ -118,7 +142,7 @@ const Dropdown = forwardRef<any, DropdownProps>(({
           onFocus={handleFocus} // Add onFocus handler
           onBlur={handleBlur} // Add onBlur handler
           inputSearchStyle={{
-            height: 35,
+            height: 40,
             paddingHorizontal: 10,
             borderRadius: 8,
             ...Fonts.Regular3,
@@ -127,7 +151,7 @@ const Dropdown = forwardRef<any, DropdownProps>(({
             { flex: 1, paddingHorizontal: Sizes.Padding },
             { ...dropdownStyle },
           ]}
-          autoScroll={false}
+          autoScroll={true} // changed false to true
           containerStyle={{
             borderRadius: Sizes.Radius,
             borderWidth: 1,
@@ -135,19 +159,25 @@ const Dropdown = forwardRef<any, DropdownProps>(({
             borderColor: Colors.Primary,
             zIndex: 10,
             marginBottom: 8,
-            transform: [{ scaleY: 1 }]
+            marginTop: 10
           }}
           flatListProps={{
+            nestedScrollEnabled: true,
+            keyboardShouldPersistTaps: 'handled',
             ListEmptyComponent: () => (
-              <View style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 20,
+                  transform: isDropdownTop ? [{ scaleY: -1 }] : '',
+                }}>
                 <Text
                   style={{
-                    flex: 1,
                     ...Fonts.Regular3,
-                    alignItems: 'center',
-                    textAlignVertical: 'center',
-                    justifyContent: 'center',
                     color: Colors.PrimaryText1,
+                    textAlign: 'center',
+                    transform: isDropdownTop ? [{ scaleX: -1 }] : '',
                   }}
                   numberOfLines={1}
                   adjustsFontSizeToFit>

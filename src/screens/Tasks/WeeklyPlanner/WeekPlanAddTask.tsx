@@ -577,7 +577,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
                 entering={FadeInUp}
                 exiting={FadeOutUp}
                 style={{ marginBottom: Sizes.Base, marginVertical: Sizes.Base }}>
-                
+
                 <View
                   style={{
                     flexDirection: 'row',
@@ -826,7 +826,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
           open={showTimePicker.time}
           mode="time"
           date={time}
-          buttonColor={Colors.Primary}
+          buttonColor={Colors.Black}
           dividerColor={Colors.Primary}
           onConfirm={t => {
             console.log('time', t);
@@ -845,7 +845,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
           open={showTimePicker.reminderTime}
           mode="time"
           date={reminderTime}
-          buttonColor={Colors.Primary}
+          buttonColor={Colors.Black}
           dividerColor={Colors.Primary}
           onConfirm={t => {
             console.log('time', t);
