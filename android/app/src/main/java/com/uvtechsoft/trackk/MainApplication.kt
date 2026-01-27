@@ -1,15 +1,21 @@
 package com.uvtechsoft.dimensions
 
 import android.app.Application
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.graphics.Color
+import android.media.AudioAttributes
+import android.net.Uri
+import android.os.Build
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.soloader.SoLoader
 
-
 // Newly Imported
-import android.content.Context
 import com.facebook.react.BuildConfig
 import com.facebook.react.ReactInstanceManager
 import java.lang.reflect.InvocationTargetException
@@ -25,6 +31,7 @@ class MainApplication : Application(), ReactApplication {
       packages.add(RunInBackgroundModule())
       packages.add(BackgroundServiceCheck())
       packages.add(DeviceAdminModule())
+      packages.add(AlarmModulePackage()) 
       return packages
     }
     override fun getJSMainModuleName(): String {
@@ -33,10 +40,34 @@ class MainApplication : Application(), ReactApplication {
   }
   override fun onCreate() {
     super.onCreate()
+
+    // Ensure the FCM channel with id "custom" exists and uses our alarm_sound
+    createCustomNotificationChannel()
+
     val defaultUEH: Thread.UncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler(CustomExceptionHandler(defaultUEH, this))
     SoLoader.init(this, false)
     initializeFlipper(this, reactNativeHost.reactInstanceManager)
+  }
+
+  private fun createCustomNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val channel = NotificationChannel(
+        "custom",
+        "Default Notifications",
+        NotificationManager.IMPORTANCE_HIGH
+      ).apply {
+        description = "Generic channel for FCM notifications"
+        enableVibration(true)
+        vibrationPattern = longArrayOf(500, 500, 500, 500)
+        enableLights(true)
+        lightColor = Color.RED
+        lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+      }
+
+      val notificationManager = getSystemService(NotificationManager::class.java)
+      notificationManager.createNotificationChannel(channel)
+    }
   }
   companion object {
     private fun initializeFlipper(

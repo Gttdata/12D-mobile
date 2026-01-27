@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.facebook.react.bridge.*
 
 class AlarmModule(private val ctx: ReactApplicationContext) : ReactContextBaseJavaModule(ctx) {
@@ -26,6 +27,19 @@ class AlarmModule(private val ctx: ReactApplicationContext) : ReactContextBaseJa
 
     val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmAt, pi)
+  }
+
+  @ReactMethod
+  fun startAlarm() {
+    val serviceIntent = Intent(ctx, AlarmService::class.java).apply {
+      action = "START"
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      ctx.startForegroundService(serviceIntent)
+    } else {
+      ctx.startService(serviceIntent)
+    }
   }
 
   @ReactMethod

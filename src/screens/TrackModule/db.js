@@ -27,12 +27,11 @@ export const openDatabase = () => {
   return db;
 };
 
-
 const createTable = () => {
   db.transaction(tx => {
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS tasks (
-        ID INTEGER,
+        ID INTEGER PRIMARY KEY,
         ARCHIVE_FLAG TEXT,
         ASSIGNED_DATE TEXT,
         CLIENT_ID INTEGER,
@@ -68,164 +67,196 @@ const createTable = () => {
   });
 };
 
-export const insertTasks = tasks => {
-  if (tasks.length === 0) return;
+export const insertTasks = (tasks) => {
+  return new Promise((resolve, reject) => {
+    if (!tasks || tasks.length === 0) {
+      resolve();
+      return;
+    }
 
-  db.transaction(tx => {
-    tasks.forEach(task => {
-      tx.executeSql(
-        `INSERT INTO tasks (
-          ID, ARCHIVE_FLAG, ASSIGNED_DATE, CLIENT_ID, COMPLETED_DATE,
-          CREATED_MODIFIED_DATE, DATE_DIFFERENCE, DESCRIPTIONS, DIAMENTION_ID,
-          DISABLE_TIMING, ENABLE_TIME, FITNESS_ACTIVITY_ID, TASK_ID, IMAGE_URL,
-          IS_SUNDAY_OFF, LABEL, READ_ONLY, SEQ_NO, STATUS, SUBSCRIPTION_DETAILS_ID,
-          SUBSCRIPTION_END_DATE, SUBSCRIPTION_START_DATE, USER_ID, USER_SUBSCRIPTION_ID
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          task.ID,
-          task.ARCHIVE_FLAG,
-          task.ASSIGNED_DATE,
-          task.CLIENT_ID,
-          task.COMPLETED_DATE,
-          task.CREATED_MODIFIED_DATE,
-          task.DATE_DIFFERENCE,
-          task.DESCRIPTIONS,
-          task.DIAMENTION_ID,
-          task.DISABLE_TIMING,
-          task.ENABLE_TIME,
-          task.FITNESS_ACTIVITY_ID,
-          task.TASK_ID,
-          task.IMAGE_URL,
-          task.IS_SUNDAY_OFF,
-          task.LABEL,
-          task.READ_ONLY,
-          task.SEQ_NO,
-          task.STATUS,
-          task.SUBSCRIPTION_DETAILS_ID,
-          task.SUBSCRIPTION_END_DATE,
-          task.SUBSCRIPTION_START_DATE,
-          task.USER_ID,
-          task.USER_SUBSCRIPTION_ID,
-        ],
-        () => {
-          console.log('Task inserted successfully');
-        },
-        err => {
-          console.error('Error inserting task: ', err);
-        },
-      );
+    db.transaction(tx => {
+      let completed = 0;
+      tasks.forEach((task) => {
+        tx.executeSql(
+          `INSERT OR REPLACE INTO tasks (
+            ID, ARCHIVE_FLAG, ASSIGNED_DATE, CLIENT_ID, COMPLETED_DATE,
+            CREATED_MODIFIED_DATE, DATE_DIFFERENCE, DESCRIPTIONS, DIAMENTION_ID,
+            DISABLE_TIMING, ENABLE_TIME, FITNESS_ACTIVITY_ID, TASK_ID, IMAGE_URL,
+            IS_SUNDAY_OFF, LABEL, READ_ONLY, SEQ_NO, STATUS, SUBSCRIPTION_DETAILS_ID,
+            SUBSCRIPTION_END_DATE, SUBSCRIPTION_START_DATE, USER_ID, USER_SUBSCRIPTION_ID
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            task.ID,
+            task.ARCHIVE_FLAG,
+            task.ASSIGNED_DATE,
+            task.CLIENT_ID,
+            task.COMPLETED_DATE,
+            task.CREATED_MODIFIED_DATE,
+            task.DATE_DIFFERENCE,
+            task.DESCRIPTIONS,
+            task.DIAMENTION_ID,
+            task.DISABLE_TIMING,
+            task.ENABLE_TIME,
+            task.FITNESS_ACTIVITY_ID,
+            task.TASK_ID,
+            task.IMAGE_URL,
+            task.IS_SUNDAY_OFF,
+            task.LABEL,
+            task.READ_ONLY,
+            task.SEQ_NO,
+            task.STATUS,
+            task.SUBSCRIPTION_DETAILS_ID,
+            task.SUBSCRIPTION_END_DATE,
+            task.SUBSCRIPTION_START_DATE,
+            task.USER_ID,
+            task.USER_SUBSCRIPTION_ID,
+          ],
+          () => {
+            console.log('Task inserted successfully');
+            completed++;
+            if (completed === tasks.length) {
+              resolve();
+            }
+          },
+          (_, err) => {
+            console.error('Error inserting task: ', err);
+            reject(err);
+            return false;
+          },
+        );
+      });
+    }, (error) => {
+      reject(error);
+    }, () => {
+      resolve();
     });
   });
 };
 
-export const updateTasksByDate = tasks => {
-  if (tasks.length === 0) return;
+export const updateTasksByDate = (tasks) => {
+  return new Promise((resolve, reject) => {
+    if (!tasks || tasks.length === 0) {
+      resolve();
+      return;
+    }
 
-  const date = tasks[0].ASSIGNED_DATE;
+    const date = tasks[0]?.ASSIGNED_DATE;
+    if (!date) {
+      resolve();
+      return;
+    }
 
-  db.transaction(tx => {
-    tasks.forEach(task => {
-      tx.executeSql(
-        `UPDATE tasks SET 
-          ARCHIVE_FLAG = ?,
-          CLIENT_ID = ?,
-          COMPLETED_DATE = ?,
-          CREATED_MODIFIED_DATE = ?,
-          DATE_DIFFERENCE = ?,
-          DESCRIPTIONS = ?,
-          DIAMENTION_ID = ?,
-          DISABLE_TIMING = ?,
-          ENABLE_TIME = ?,
-          FITNESS_ACTIVITY_ID = ?,
-          TASK_ID = ?,
-          IMAGE_URL = ?,
-          IS_SUNDAY_OFF = ?,
-          LABEL = ?,
-          READ_ONLY = ?,
-          SEQ_NO = ?,
-          STATUS = ?,
-          SUBSCRIPTION_DETAILS_ID = ?,
-          SUBSCRIPTION_END_DATE = ?,
-          SUBSCRIPTION_START_DATE = ?,
-          USER_ID = ?,
-          USER_SUBSCRIPTION_ID = ?
-        WHERE ASSIGNED_DATE = ? AND ID = ?`,
-        [
-          task.ARCHIVE_FLAG,
-          task.CLIENT_ID,
-          task.COMPLETED_DATE,
-          task.CREATED_MODIFIED_DATE,
-          task.DATE_DIFFERENCE,
-          task.DESCRIPTIONS,
-          task.DIAMENTION_ID,
-          task.DISABLE_TIMING,
-          task.ENABLE_TIME,
-          task.FITNESS_ACTIVITY_ID,
-          task.TASK_ID,
-          task.IMAGE_URL,
-          task.IS_SUNDAY_OFF,
-          task.LABEL,
-          task.READ_ONLY,
-          task.SEQ_NO,
-          task.STATUS,
-          task.SUBSCRIPTION_DETAILS_ID,
-          task.SUBSCRIPTION_END_DATE,
-          task.SUBSCRIPTION_START_DATE,
-          task.USER_ID,
-          task.USER_SUBSCRIPTION_ID,
-          date,
-          task.ID,
-        ],
-        () => {
-          console.log('Task updated successfully');
-        },
-        err => {
-          console.error('Error updating task: ', err);
-        },
-      );
+    db.transaction(tx => {
+      tasks.forEach((task) => {
+        tx.executeSql(
+          `UPDATE tasks SET 
+            ARCHIVE_FLAG = ?,
+            CLIENT_ID = ?,
+            COMPLETED_DATE = ?,
+            CREATED_MODIFIED_DATE = ?,
+            DATE_DIFFERENCE = ?,
+            DESCRIPTIONS = ?,
+            DIAMENTION_ID = ?,
+            DISABLE_TIMING = ?,
+            ENABLE_TIME = ?,
+            FITNESS_ACTIVITY_ID = ?,
+            TASK_ID = ?,
+            IMAGE_URL = ?,
+            IS_SUNDAY_OFF = ?,
+            LABEL = ?,
+            READ_ONLY = ?,
+            SEQ_NO = ?,
+            STATUS = ?,
+            SUBSCRIPTION_DETAILS_ID = ?,
+            SUBSCRIPTION_END_DATE = ?,
+            SUBSCRIPTION_START_DATE = ?,
+            USER_ID = ?,
+            USER_SUBSCRIPTION_ID = ?
+          WHERE ASSIGNED_DATE = ? AND ID = ?`,
+          [
+            task.ARCHIVE_FLAG,
+            task.CLIENT_ID,
+            task.COMPLETED_DATE,
+            task.CREATED_MODIFIED_DATE,
+            task.DATE_DIFFERENCE,
+            task.DESCRIPTIONS,
+            task.DIAMENTION_ID,
+            task.DISABLE_TIMING,
+            task.ENABLE_TIME,
+            task.FITNESS_ACTIVITY_ID,
+            task.TASK_ID,
+            task.IMAGE_URL,
+            task.IS_SUNDAY_OFF,
+            task.LABEL,
+            task.READ_ONLY,
+            task.SEQ_NO,
+            task.STATUS,
+            task.SUBSCRIPTION_DETAILS_ID,
+            task.SUBSCRIPTION_END_DATE,
+            task.SUBSCRIPTION_START_DATE,
+            task.USER_ID,
+            task.USER_SUBSCRIPTION_ID,
+            date,
+            task.ID,
+          ],
+          () => {
+            console.log('Task updated successfully');
+          },
+          (_, err) => {
+            console.error('Error updating task: ', err);
+            return false;
+          },
+        );
+      });
+    }, (error) => {
+      reject(error);
+    }, () => {
+      resolve();
     });
   });
 };
 
-export const getTasksByDate = (date, userId, callback) => {
-  const dbDate = date;
-
+export const getTasksByDate = (date, userId, userSubscriptionId, callback) => {
   db.transaction(tx => {
     tx.executeSql(
-      `SELECT * FROM tasks WHERE ASSIGNED_DATE LIKE ? AND USER_ID = ?`,
-      [dbDate, userId],
-      (tx, results) => {
+      `SELECT * FROM tasks WHERE ASSIGNED_DATE = ? AND USER_ID = ? AND USER_SUBSCRIPTION_ID = ?`,
+      [date, userId, userSubscriptionId],
+      (_, results) => {
         const { rows } = results;
         let tasks = [];
         if (rows.length > 0) {
           for (let i = 0; i < rows.length; i++) {
             tasks.push(rows.item(i));
           }
-          callback(tasks);
-        } else {
-          callback([]);
         }
+        callback(tasks);
       },
-      (tx, err) => {
+      (_, err) => {
         console.error('Error fetching tasks: ', err);
         callback([]);
+        return false;
       },
     );
   });
 };
 
-export const deleteTasksByDate = date => {
-  db.transaction(tx => {
-    tx.executeSql(
-      `DELETE FROM tasks WHERE ASSIGNED_DATE = ?`,
-      [date],
-      () => {
-        console.log('Tasks deleted successfully for date: ', date);
-      },
-      err => {
-        console.error('Error deleting tasks: ', err);
-      },
-    );
+export const deleteTasksByDate = (date) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `DELETE FROM tasks WHERE ASSIGNED_DATE = ?`,
+        [date],
+        () => {
+          console.log('Tasks deleted successfully for date: ', date);
+          resolve();
+        },
+        (_, err) => {
+          console.error('Error deleting tasks: ', err);
+          reject(err);
+          return false;
+        },
+      );
+    });
   });
 };
 
@@ -236,53 +267,58 @@ export const createSubmitApiFlagTable = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         userId INTEGER,
         date TEXT,
-        flag TEXT,
-        UNIQUE(userId, date)
+        userSubscriptionId INTEGER,
+        flag TEXT
       );`,
       [],
       () => {
         console.log('SubmitApiFlag table created successfully');
       },
-      (tx, error) => {
+      (_, error) => {
         console.error('Error creating SubmitApiFlag table: ', error);
+        return false;
       },
     );
   });
 };
 
-export const setSubmitApiCalledFlag = (userId, date) => {
-  const today = date;
-  db.transaction(tx => {
-    tx.executeSql(
-      `INSERT INTO submitApiFlag (userId, date, flag) VALUES (?, ?, ?)`,
-      [userId, today, 'true'],
-      () => {
-        console.log('Submit API flag set successfully');
-      },
-      (tx, error) => {
-        console.error('Error setting submit API flag: ', error);
-      },
-    );
-  });
-};
-
-export const getSubmitApiCalledFlag = (userId, date) => {
+export const setSubmitApiCalledFlag = (userId, date, userSubscriptionId) => {
   return new Promise((resolve, reject) => {
-    const today = date;
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT flag FROM submitApiFlag WHERE userId = ? AND date = ?`,
-        [userId, today],
-        (tx, results) => {
+        `INSERT INTO submitApiFlag (userId, date, userSubscriptionId, flag) VALUES (?, ?, ?, ?)`,
+        [userId, date, userSubscriptionId, 'true'],
+        () => {
+          console.log('Submit API flag set successfully');
+          resolve();
+        },
+        (_, error) => {
+          console.error('Error setting submit API flag: ', error);
+          reject(error);
+          return false;
+        },
+      );
+    });
+  });
+};
+
+export const getSubmitApiCalledFlag = (userId, date, userSubscriptionId) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT flag FROM submitApiFlag WHERE userId = ? AND date = ? AND userSubscriptionId = ?`,
+        [userId, date, userSubscriptionId],
+        (_, results) => {
           if (results.rows.length > 0) {
             resolve(results.rows.item(0).flag === 'true');
           } else {
             resolve(false);
           }
         },
-        (tx, error) => {
+        (_, error) => {
           console.error('Error getting submit API flag: ', error);
-          reject(error);
+          resolve(false);
+          return false;
         },
       );
     });
@@ -290,15 +326,33 @@ export const getSubmitApiCalledFlag = (userId, date) => {
 };
 
 export const deleteTableData = () => {
-  db.transaction(tx => {
-    tx.executeSql(
-      `DELETE FROM tasks;`,
-      [],
-      () => console.log("All tasks deleted successfully"),
-      (tx, err) => {
-        console.error("Error deleting tasks data:", err);
-        return true;
-      }
-    );
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `DELETE FROM tasks;`,
+        [],
+        () => {
+          console.log("All tasks deleted successfully");
+          tx.executeSql(
+            `DELETE FROM submitApiFlag;`,
+            [],
+            () => {
+              console.log("All submit flags deleted successfully");
+              resolve();
+            },
+            (_, err) => {
+              console.error("Error deleting submit flags:", err);
+              resolve();
+              return false;
+            }
+          );
+        },
+        (_, err) => {
+          console.error("Error deleting tasks data:", err);
+          resolve();
+          return false;
+        }
+      );
+    });
   });
 };

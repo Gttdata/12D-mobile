@@ -1,32 +1,27 @@
 import {
-  View,
-  Text,
-  Alert,
   StatusBar,
-  StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import Routes from './src/routes';
-import {Permissions, useSelector} from './src/Modules';
+import { Permissions, useSelector } from './src/Modules';
 import SplashScreen from './src/screens/SplashScreen';
 import AuthRoutes from './src/auth/AuthRoutes';
 import messaging from '@react-native-firebase/messaging';
-import {Notification} from './src/Modules/notifications';
-import { NativeModules } from 'react-native';
-const { AlarmModule } = NativeModules;
+import { Notification } from './src/Modules/notifications';
 
 const App = () => {
-  const {showSplashScreen} = useSelector(state => state.app);
-  const {member} = useSelector(state => state.member);
-//  useEffect(() => {
-//   try { AlarmModule.scheduleAlarm(5000); } 
-//   catch (e) { console.warn(e); }
-// }, []);
+  const { showSplashScreen } = useSelector(state => state.app);
+  const { member } = useSelector(state => state.member);
+  console.log("member data in app.tsx: ", member);
+  //  useEffect(() => {
+  //   try { AlarmModule.scheduleAlarm(5000); } 
+  //   catch (e) { console.warn(e); }
+  // }, []);
   useEffect(() => {
     checkPermission();
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Notification(remoteMessage);
+      Notification(remoteMessage, false);
     });
 
     return unsubscribe;
@@ -36,11 +31,11 @@ const App = () => {
     Permissions.requestAll();
   };
 
-  
+
 
   if (showSplashScreen) {
     return (
-      <SafeAreaView style={{flex: 1}}>
+      <SafeAreaView style={{ flex: 1 }}>
         <StatusBar
           barStyle="dark-content"
           backgroundColor="#00BCD4"

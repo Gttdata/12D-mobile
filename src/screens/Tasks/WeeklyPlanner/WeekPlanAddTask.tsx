@@ -59,22 +59,22 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
         : "",
   });
   const [date, setDate] = useState(
-    item ? new Date(item.CREATED_DATETIME) : new Date()
+    item ? new Date(item.CREATED_DATETIME) : new Date(),
   );
   const [time, setTime] = useState(
     item
       ? type == "C"
         ? new Date(item.REMIND_DATETIME)
         : new Date(item.CREATED_DATETIME)
-      : new Date()
+      : new Date(),
   );
   const [reminderDate, setReminderDate] = useState(
-    item ? new Date(item.REMIND_DATETIME) : new Date()
+    item ? new Date(item.REMIND_DATETIME) : new Date(),
   );
   const [reminderTime, setReminderTime] = useState(
     item
       ? new Date(item.REMIND_DATETIME)
-      : new Date(new Date().setMinutes(new Date().getMinutes() - 5))
+      : new Date(new Date().setMinutes(new Date().getMinutes() - 5)),
   );
   const [showPicker, setShowPicker] = useState({
     date: false,
@@ -222,7 +222,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
   };
   const [weekDates, setWeekDates] = useState(getWeekDates(date));
   const [selectedDates, setSelectedDates] = useState<any>(
-    selectedDateArray != null ? selectedDateArray : [date]
+    selectedDateArray != null ? selectedDateArray : [date],
   );
   const [isFullWeek, setIsFullWeek] = useState(true);
   const toggleDateSelection = (item: any, index: any) => {
@@ -230,7 +230,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
     newWeekDates[index].selected = !newWeekDates[index].selected;
     setWeekDates(newWeekDates);
     const updatedSelectedDates = newWeekDates.filter(
-      (date: any) => date.selected
+      (date: any) => date.selected,
     );
     setSelectedDates(updatedSelectedDates);
   };
@@ -524,7 +524,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
                                 ? selectedDates.find(
                                     (it: any) =>
                                       moment(it).format("YYYY-MM-DD") ==
-                                      moment(item).format("YYYY-MM-DD")
+                                      moment(item).format("YYYY-MM-DD"),
                                   )
                                   ? Colors.Primary2
                                   : Colors.White
@@ -542,7 +542,7 @@ const WeekPlanAddTask = ({ navigation, route }: Props) => {
                                 ? selectedDates.find(
                                     (it: any) =>
                                       moment(it).format("YYYY-MM-DD") ==
-                                      moment(item).format("YYYY-MM-DD")
+                                      moment(item).format("YYYY-MM-DD"),
                                   )
                                   ? Colors.White
                                   : Colors.PrimaryText1

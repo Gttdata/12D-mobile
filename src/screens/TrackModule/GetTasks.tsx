@@ -110,27 +110,20 @@ const GetTasks = ({ navigation, route }: Props) => {
   }, [selectedDate]);
 
   const getTrackTask = async () => {
-    const submitApiCalled = await getSubmitApiCalledFlag(
-      member?.ID,
-      selectedDate
-    );
-    submitApiCalled
-      ? setData({ ...data, showSubmitButton: false })
-      : setData({ ...data, showSubmitButton: true });
+    try {
+      const subscriptionDetails = await AsyncStorage.getItem("SUBSCRIPTION_DETAILS");
 
-    setTaskData({ ...taskData, loading: true });
+      if (!subscriptionDetails) {
+        console.log('No subscription details found');
+        setTaskData({ data: [], loading: false });
+        return;
+      }
 
-    const subscriptionDetails = await AsyncStorage.getItem(
-      "SUBSCRIPTION_DETAILS"
-    );
-
-    let subscriptionData = null;
-    if (subscriptionDetails) {
-      subscriptionData = JSON.parse(subscriptionDetails);
-    }
-
-    if (subscriptionDetails) {
       const subscriptionData = JSON.parse(subscriptionDetails);
+      const USER_SUBSCRIPTION_ID = subscriptionData.USER_SUBSCRIPTION_ID;
+
+      console.log('USER_SUBSCRIPTION_ID:', USER_SUBSCRIPTION_ID);
+
       const startDate = moment(subscriptionData.START_DATE);
       const endDate = moment(subscriptionData.END_DATE);
       const today = moment();
@@ -141,78 +134,74 @@ const GetTasks = ({ navigation, route }: Props) => {
         totalDays: totalDays,
         currentDay: currentDay > totalDays ? totalDays : currentDay,
       });
-    }
-    try {
-      getTasksByDate(selectedDate, member?.ID, async (storedData: any) => {
+
+      let submitApiCalled = false;
+      try {
+        submitApiCalled = await getSubmitApiCalledFlag(
+          member?.ID,
+          selectedDate,
+          USER_SUBSCRIPTION_ID
+        );
+      } catch (e) {
+        console.log('Error getting submit flag:', e);
+      }
+
+      setData({ ...data, showSubmitButton: !submitApiCalled });
+      setTaskData({ data: [], loading: true });
+
+      getTasksByDate(selectedDate, member?.ID, USER_SUBSCRIPTION_ID, async (storedData: any) => {
+        console.log('SQLite returned:', storedData.length, 'tasks');
+
         if (storedData.length > 0) {
-          const buttonStatus = storedData.every(
-            (item: DAILY_TRACK_BOOK_TASK) => item.STATUS !== "0"
-          );
-          if (buttonStatus && !submitApiCalled) {
+          setTaskData({ data: storedData, loading: false });
+        } else {
+          try {
             const res = await apiPost("api/userTrackbook/get", {
-              filter: ` AND USER_ID = ${member?.ID} AND DATE(ASSIGNED_DATE) = "${selectedDate}" `,
+              filter: `AND USER_ID = ${member?.ID} AND USER_SUBSCRIPTION_ID = ${USER_SUBSCRIPTION_ID} AND DATE(ASSIGNED_DATE) = "${selectedDate}"`,
               sortKey: "DIAMENTION_ID",
               sortValue: "ASC",
             });
 
-            console.log("USER TREACKBOOK", res);
+            console.log('API Response:', res?.code, 'Count:', res?.data?.length);
 
-            const checkStatus = res.data.every(
-              (item: DAILY_TRACK_BOOK_TASK) => item.STATUS !== "0"
-            );
-            if (checkStatus) {
-              await setSubmitApiCalledFlag(member?.ID, selectedDate);
-              getTrackTask();
-            } else {
-              setTaskData({ ...taskData, data: storedData, loading: false });
-            }
-          } else {
-            setTaskData({ ...taskData, data: storedData, loading: false });
-          }
-        } else {
-          const res = await apiPost("api/userTrackbook/get", {
-            filter: `AND USER_ID = ${member?.ID} AND SUBSCRIPTION_DETAILS_ID = ${subscriptionData?.ID} AND DATE(ASSIGNED_DATE) = "${selectedDate}" `,
-            sortKey: "DIAMENTION_ID",
-            sortValue: "ASC",
-          });
-          // console.log('--------------', res)
-          if (res && res.code === 200) {
-            if (res.data.length > 0) {
+            if (res && res.code === 200 && res.data && res.data.length > 0) {
+              const formattedData = res.data.map((item: any) => ({
+                ...item,
+                ASSIGNED_DATE: moment(item.ASSIGNED_DATE).format("YYYY-MM-DD"),
+              }));
+
               try {
-                const data = res.data.map((item: DAILY_TRACK_BOOK_TASK) => ({
-                  ...item,
-                  ASSIGNED_DATE: moment(item.ASSIGNED_DATE).format(
-                    "YYYY-MM-DD"
-                  ),
-                }));
-                await insertTasks(data);
-                setOpenAlertMsg(false);
-                getTrackTask();
+                await insertTasks(formattedData);
+                console.log('Tasks inserted into SQLite');
               } catch (e) {
-                console.error("Failed to save data to SQLite", e);
+                console.log('Error inserting tasks:', e);
               }
+              setTaskData({ data: formattedData, loading: false });
             } else {
-              setTaskData({ ...taskData, loading: false, data: [] });
+              setTaskData({ data: [], loading: false });
             }
-          } else {
-            setTaskData({ ...taskData, loading: false });
-            Toast("Something went wrong. Please try again");
+          } catch (error) {
+            console.error("API Error:", error);
+            setTaskData({ data: [], loading: false });
           }
         }
       });
     } catch (error) {
-      setTaskData({ ...taskData, loading: false });
-      console.error("Error:", error);
+      console.error("getTrackTask Error:", error);
+      setTaskData({ data: [], loading: false });
     }
   };
 
   const completeTask = async () => {
     setData({ ...data, loading: true });
+
+    const subscriptionDetails = await AsyncStorage.getItem("SUBSCRIPTION_DETAILS");
+    const subscriptionData = JSON.parse(subscriptionDetails);
+    const USER_SUBSCRIPTION_ID = subscriptionData.USER_SUBSCRIPTION_ID;
+
     try {
       const bulkUpdateData = taskData.data.map((item) => {
-        const newAssignedDate = moment(item.ASSIGNED_DATE).format(
-          "YYYY-MM-DD HH:mm:ss"
-        );
+        const newAssignedDate = moment(item.ASSIGNED_DATE).format("YYYY-MM-DD HH:mm:ss");
         const newStatus = item.STATUS === "0" ? "N" : item.STATUS;
         return { ...item, ASSIGNED_DATE: newAssignedDate, STATUS: newStatus };
       });
@@ -227,7 +216,7 @@ const GetTasks = ({ navigation, route }: Props) => {
           setBoom(true);
         }
         await deleteTasksByDate(selectedDate);
-        await setSubmitApiCalledFlag(member?.ID, selectedDate);
+        await setSubmitApiCalledFlag(member?.ID, selectedDate, USER_SUBSCRIPTION_ID);
         Toast("Save data successfully");
         getTrackTask();
       } else {
@@ -876,12 +865,21 @@ const GetTasks = ({ navigation, route }: Props) => {
       const res = await apiPost("api/userSubscription/exit", subscriptionData);
       if (res && res.code === 200) {
         setLoading(false);
-        console.log("Exit successful", res);
-        await AsyncStorage.setItem("SUBSCRIPTION_DETAILS", "");
-        await AsyncStorage.removeItem("STAGE_NAME").catch(() => {
-          AsyncStorage.setItem("STAGE_NAME", "");
-        });
-        await deleteTasksByDate(selectedDate);
+
+        await deleteTableData();
+
+        await AsyncStorage.multiRemove([
+          "SUBSCRIPTION_DETAILS",
+          "STAGE_NAME",
+          "OPTIONS",
+          "DIMENSION_OPTIONS",
+          "VIDEO_DETAILS",
+          "AgeGroup",
+        ]);
+        dispatch(Reducers.setSelectedTrackData([]));
+        dispatch(Reducers.setSelectedChallengeData([]));
+        dispatch(Reducers.setSelectedDimensionOptionData([]));
+        dispatch(Reducers.setSelectedDimensionNoOptions([]));
         setShowExitModal(false);
         dispatch(Reducers.setShowSplash(true));
       } else {
