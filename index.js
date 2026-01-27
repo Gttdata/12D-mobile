@@ -10,6 +10,7 @@ import {store} from './src/Modules';
 import './src/i18n/i18n.config';
 import messaging from '@react-native-firebase/messaging';
 import {Notification} from './src/Modules/notifications';
+import {SafeAreaView} from 'react-native-safe-area-context'
 // const {BackgroundServiceCheck, CheckUsedApp, BatteryRestrictions, DeviceAdmin} =
 //   NativeModules;
 const Application = () => {
@@ -30,7 +31,9 @@ const Application = () => {
   });
   return (
     <Provider store={store}>
+      <SafeAreaView style={{flex: 1}} >
       <App />
+      </SafeAreaView>
     </Provider>
   );
 };

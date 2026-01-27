@@ -21,13 +21,13 @@ import DeviceInfo from "react-native-device-info";
 //Live Server
 export const RAZOR_PAY_ID_KEY = "rzp_live_DOp7EcIfA7r6VE";
 export const RAZOR_PAY_SECRET_KEY = "pOi40zkFGpujYjmrOs2Nykiz";
-// export const BASE_URL = "https://admin.12dimensionsapp.in:9878/";
-export const BASE_URL = "https://wnm884z0-2003.inc1.devtunnels.ms/";
+export const BASE_URL = "https://admin.12dimensionsapp.in:9878/";
+// export const BASE_URL = "https://wnm884z0-2003.inc1.devtunnels.ms/";
 // export const BASE_URL = "http://192.168.29.246:2003/";
 export const API_KEY = "PiuRcts9gYsh8CMwAIwApvNL4PayKIaR";
 export const APPLICATION_KEY = "0vGdJAP307JqaNYP";
 export const IMAGE_URL: string = BASE_URL + "static/";
-export const PACKAGE_NAME = 'com.uvtechsoft.dimensions'
+export const PACKAGE_NAME = "com.uvtechsoft.dimensions";
 
 export const apiPost = async (method: string, data: any) => {
   try {
